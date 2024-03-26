@@ -1,6 +1,7 @@
-// cpp standard include 
+// standard library includes 
 #include <vector>
 #include <cmath>
+
 //ros2 includes
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/qos.hpp>
@@ -11,6 +12,7 @@
 #include <chrono>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+
 //custom include
 #include "bbm_interfaces/msg/lineparams.hpp"
 
@@ -142,7 +144,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		} 
 			
 		/** Method that computes the total repulsive force that drives the robot away from obstacles **/
-		double computeRepulsiveForce(){
+		std::vector<double> computeRepulsiveForce(){
 			std::vector<double> f_rep(2,0);
 			for (int i=0; i<laser.size();i++){
 				if (laser[i]<=d_inf){
@@ -163,17 +165,15 @@ class BBM_Control_Node : public rclcpp::Node{
 	
 	public:
 		BBM_Control_Node() : Node("bbm_control_node"), pose(3,0), laser (360,0){
-			rclcpp::QoS custom_qos(10);
-
-			auto sub_opt = rclcpp::SubscriptionOptions();
+			
 			r=5;
 			k_a=5;
 			k_r=3;
 			d_inf=2;
 			delta=3;
 			k_theta=2;
-			delta1=0.5; // compreso tra 0 e 1 esclusi
-			delta2=2; //maggiore di zero
+			delta1=0.5; // delta1 in (0, 1)
+			delta2=2; // delta2 > 0
 			d1=0.1;
 			d2=0.1;
 			d3=0.1;
@@ -181,9 +181,11 @@ class BBM_Control_Node : public rclcpp::Node{
 			v_max=7;
 			omega_max=1;
 			
-        		lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
-        		laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
-        		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
+			rclcpp::QoS custom_qos(10);
+			auto sub_opt = rclcpp::SubscriptionOptions();
+        	lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
+        	laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
+        	poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
   			timer_ = this->create_wall_timer(10ms, std::bind(&BBM_Control_Node::controlCallback, this));
   			vel_pub= create_publisher<geometry_msgs::msg::Twist> ("/cmd_vel", custom_qos);
       			RCLCPP_INFO(this->get_logger(), "BBM_Control_Node started");
