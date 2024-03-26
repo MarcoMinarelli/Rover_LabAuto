@@ -1,0 +1,278 @@
+// cpp standard include 
+#include <vector>
+#include <cmath>
+//ros2 includes
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/qos.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+#include <chrono>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+//custom include
+#include "bbm_interfaces/msg/lineparams.hpp"
+
+
+using namespace std::chrono_literals;
+
+/** Node that, given robot position, lidar measurements and line we want to converge to, comput linear velocity and angular velocity **/
+/** References: [1] "A sliding mode based controller for trajectory tracking of perturbed unicycle mobile robots" M.Mera H.Rios E.A.Martinez
+		[2] "Line following for an autonomous sailboat using potential fields method" F.Plumet H.Saoud M.D.Hua **/
+		
+class BBM_Control_Node : public rclcpp::Node{
+	private:
+		// subscriber 
+		rclcpp::Subscription<bbm_interfaces::msg::Lineparams>::SharedPtr lpSub;
+		rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserSub;
+		rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr poseSub;
+		rclcpp::TimerBase::SharedPtr timer_;
+		
+		//Publisher 
+		rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub;
+		
+		//sensor feedback
+		std::vector<double> pose; //pose=[x_r, y_r, theta_r] 
+		std::vector<float> laser;
+		
+		// parameters
+		float m, q, x, y; // line params
+		double r; // [m]
+		double k_a; // attractive gain
+		double d_inf; // [m]
+		double k_r; // repulsive gain
+		double delta; // threshold between quadratic potential and distance potential
+		double k_theta; // omega gain 
+		double rho1, rho2; //SMC gains
+		double delta1, delta2; // SMC f(e2) params
+		double d1, d2, d3; //systems' disturbance
+		double v_min, v_max, omega_max; //velocity limits
+		
+		
+		/** Method that compute the distance between two points **/
+		double distance (std::vector<double> x1, std::vector<double> x2){
+			return sqrt(pow(x1[0] - x2[0],2)+pow(x1[1]-x2[1],2));
+		}
+		
+		
+		/** Method that returns the intersection between convergence line and a circle with radius r centered in robot position. From [2]**/ 
+		std::vector<double> intersection(){
+			std::vector<double> ret(2,0);
+			double b=-2*pose[0]+2*m*q-2*m*pose[1];
+			double a=1+pow(m,2);
+			double c=pow(pose[0],2)+pow(q,2)+pow(pose[1],2)-2*q*pose[1]-pow(r,2);
+			double delta=pow(b,2)-4*a*c;
+			double xd=0;
+			if(delta>0){
+			
+				double x1=(-b+sqrt(delta))/(2*a);
+				double x2=(-b-sqrt(delta))/(2*a);
+				
+				std::vector<double> c1(x1, m*x1+q);
+				std::vector<double> c2(x2, m*x2+q);
+				std::vector<double> x_a(x, y);
+				xd=(distance(c1, x_a)>distance(c2, x_a))?x1:x2;
+				
+				
+			}else if(delta==0){
+			
+				xd=-b/(2*a);
+			
+			}else {
+				
+				double m_s= -1/m;
+				double q_s= pose[1]-m_s*pose[0];
+				xd=(q_s-q)/(m-m_s);
+			
+			}
+			
+			double yd=m*xd+q;
+			ret[0]=xd;
+			ret[1]=yd;
+			return ret;
+		}
+		
+		/**Method that compute sign of a float**/
+		int sign(double x){
+			 return (x==0)?-2:x/fabs(x);
+		}
+		
+		
+		
+		/** Method that returns the difference v1 - v2 **/
+		std::vector<double> minus(std::vector<double> v1, std::vector<double> v2){
+			if(v1.size()!=v2.size())
+				return;
+			std::vector<double> ret(v1.size(), 0);
+			for(int i=0; i<v1.size(); i++)
+				ret[i]=v1[i]-v2[i];
+			return ret;
+		}
+		
+		/** Method that returns the sum v1 + v2 **/
+		std::vector<double> sum(std::vector<double> v1, std::vector<double> v2){
+			if(v1.size()!=v2.size())
+				return;
+			std::vector<double> ret(v1.size(), 0);
+			for(int i=0; i<v1.size(); i++)
+				ret[i]=v1[i]+v2[i];
+			return ret;
+		}
+		
+		/** Method that returns the product between scalar s and vector v: s*v **/
+		std::vector<double> scalar_prod(double s,std::vector<double> v){
+			std::vector<double> ret(v.size(), 0);
+			for(int i=0; i<v.size(); i++)
+				ret[i]=s*v[i];
+			return ret;
+		}
+		
+		/** Method that computes the attractive force that drives the robot towards the goal **/
+		std::vector<double> computeAttractiveForce(std::vector<double> goal){
+			double dist= distance(pose, goal); 
+			std::vector<double> f_attr(2,0);
+			
+			if(dist<=delta)
+				f_attr=minus(goal, pose);
+			else
+				f_attr=scalar_prod(1/dist, minus(goal, pose));
+
+			return scalar_prod(k_a, f_attr);
+		} 
+			
+		/** Method that computes the total repulsive force that drives the robot away from obstacles **/
+		double computeRepulsiveForce(){
+			std::vector<double> f_rep(2,0);
+			for (int i=0; i<laser.size();i++){
+				if (laser[i]<=d_inf){
+					std::vector<double> f(2,0);
+					double s=1/pow(laser[i],3)*(1/laser[i]-1/d_inf);
+
+					std::vector<double> loc_obs{laser[i]*cos(i),laser[i]*sin(i)};
+					std::vector<double> obs=sum(pose,loc_obs);
+					f=minus(pose,obs);
+					f=scalar_prod(s,f);
+					f_rep=sum(f_rep,f);
+				}
+
+			}
+			return scalar_prod(k_r, f_rep);
+		}
+
+	
+	public:
+		BBM_Control_Node() : Node("bbm_control_node"), pose(3,0), laser (360,0){
+			rclcpp::QoS custom_qos(10);
+
+			auto sub_opt = rclcpp::SubscriptionOptions();
+			r=5;
+			k_a=5;
+			k_r=3;
+			d_inf=2;
+			delta=3;
+			k_theta=2;
+			delta1=0.5; // compreso tra 0 e 1 esclusi
+			delta2=2; //maggiore di zero
+			d1=0.1;
+			d2=0.1;
+			d3=0.1;
+			v_min=2; //[m/s]
+			v_max=7;
+			omega_max=1;
+			
+        		lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
+        		laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
+        		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
+  			timer_ = this->create_wall_timer(10ms, std::bind(&BBM_Control_Node::controlCallback, this));
+  			vel_pub= create_publisher<geometry_msgs::msg::Twist> ("/cmd_vel", custom_qos);
+      			RCLCPP_INFO(this->get_logger(), "BBM_Control_Node started");
+		}
+		
+		/** Method that stores the pose for later usage **/
+		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
+			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
+
+			// 3x3 Rotation matrix from quaternion
+			tf2::Matrix3x3 m(q);
+
+			// Roll Pitch and Yaw from rotation matrix
+			double roll, pitch, yaw;
+			m.getRPY(roll, pitch, yaw);
+			
+		    	pose[0] =  msg->pose.position.x;
+		    	pose[1] =  msg->pose.position.y;
+		    	pose[2] =  yaw;
+		}
+		
+		/** Method that stores the parameters of the line towards which the robot has to converge **/
+		void lineParamsCallback(const bbm_interfaces::msg::Lineparams::SharedPtr msg){
+			m=msg->m;
+			q=msg->q;
+			x=msg->x;
+			y=msg->y;
+		}
+		
+		/** Method that stores the LiDar ranges for later usage **/
+		void laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg){
+			for (int i=0;i<360 ;i++){
+				laser[i]=msg->ranges[i];
+			}
+		}
+		/** function used in SMC. If e2 ==0, then 1/|e2| = inf and so min is delta2 **/
+		double f(double e2){ 
+			if (e2==0) return delta2;
+			return ( (delta1*(1/fabs(e2))<delta2)? (delta1*(1/fabs(e2)) : delta2 )*(-e2); 	
+		}
+		
+		/** From [1] **/
+		double computeRho1(double rho2){
+			double c1=((delta1+(d1-d3)*sqrt(1-pow(delta1,2)))/(1+d3-d1))*v_max;
+			double c2=((1+d2)*(omega_max+rho2)*(delta1/delta2)+d2*v_max)/(1-d1);
+			double r1=(c1>c2) ? c1:c2;
+			
+			double c3=((delta1-d3*sqrt((1-pow(delta1, 2)))/d3)*v_min);
+			double c4=(delta1/d3)*v_min-v_max*sqrt(1-pow(delta1,2));
+			double r2=(c3<c4) ? c3:c4;
+			
+			return (r1+r2)/2; // r1<rho1<r2 so we choose the average	
+		}
+		
+		/** From [1] **/
+		double computeRho2(){
+			double r3=((d2*omega_max*sqrt(1-pow(delta1,2))+delta2*v_max+delta1*v_min))/((1-d2)*sqrt(1-pow(delta1,2)));
+			return r3+0.2; //rho2>r3 so we sum 0.2
+					
+		}
+		
+		/** Method that compute the linear and angular velocity in order to converge to the line **/
+		void controlCallback(){
+			std::vector<double> goal=intersection();
+			std::vector<double> f_attr=computeAttractiveForce(goal);
+			std::vector<double> f_rep= computeRepulsiveForce();
+			std::vector<double> f_tot= sum(f_attr,f_rep);
+			
+			double v_d = f_tot[0]* cos(pose[2])+ f_tot[1]* sin(pose[2]);
+			double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-pose[2]);
+			
+			//SMC
+			double u1=-computeRho1(computeRho2())*sign(goal[0]-pose[0]);
+			double u2=-computeRho2()*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
+			
+			double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
+			double omega=omega_d-u2;
+			
+			geometry_msgs::msgs::Twist msg;
+			msg.linear.x=v;
+			msg.angular.z=omega;
+			vel_pub -> publish(msg);
+		}
+};
+
+
+int main(int argc, char **argv) {
+	rclcpp::init(argc, argv);
+	rclcpp::spin(std::make_shared<BBM_Control_Node>());
+    	rclcpp::shutdown();
+    	return 0;
+}
