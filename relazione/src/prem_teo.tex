@@ -42,7 +42,7 @@ e la direzione che il robot dovrà prendere (quindi la "forza" agente sul robot)
 \begin{equation}
   -\frac{\partial  J(\boldsymbol{q})}{\partial \boldsymbol{q}} = -  k_a \frac{\partial  J_{att}(\boldsymbol{q})}{\partial \boldsymbol{q}} - k_r \frac{\partial  J_{rep}(\boldsymbol{q})}{\partial \boldsymbol{q}}
 \end{equation}
-Per la scelta dei campi attrattivi e repulsivi, alcune scelte solitamente usate \cite{libroRobotica} sono il campo attrattivo si è scelto un potenziale Huber-like: 
+Per la scelta dei campi attrattivi e repulsivi si può fare rifermiento a \cite{libroRobotica}. Nel nostro caso è stato scelto un potenziale attrattivo Huber-like: 
 \begin{equation}
   \begin{cases}
     \frac{1}{2} || \boldsymbol{q} - \boldsymbol{q_G}||^2 \: \: \:  \: \: \: & se \: || \boldsymbol{q} - \boldsymbol{q_G}|| \leq \delta \\
@@ -55,7 +55,7 @@ Per la scelta dei campi attrattivi e repulsivi, alcune scelte solitamente usate 
   \end{cases} 
 \end{equation}
 dove con $  \boldsymbol{q_G} $ si indica la configurazione obbiettivo e con $ \delta  $ la distanza di switch tra un potenziale e l'altro. 
-Per il campo repulsivo dell'ostacolo $i$-esimo, invece si è scelto
+Per il campo repulsivo dell'ostacolo $i$-esimo, invece è stato scelto
 \begin{equation}
   \begin{cases}
     \frac{1}{\gamma} (\frac{a}{d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}} - \frac{1}{\delta_0})^\gamma \: \: \:  & se \: d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) \leq \delta_0 \\
@@ -63,8 +63,8 @@ Per il campo repulsivo dell'ostacolo $i$-esimo, invece si è scelto
   \end{cases} 
 \end{equation}
 %\begin{equation}
-%  \begin{cases}
-%    \frac{1}{\gamma} (\frac{a}{d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}} - \frac{1}{\delta_0})^\gamma \: \: \:  & se \: d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) \leq \delta_0 \\
+% \begin{cases}
+%    \frac{1}{\gamma} (\frac{a}{d( \boldsymbol{q},  %\boldsymbol{q_{obs_i}}} - \frac{1}{\delta_0})^\gamma \: \: \:  % & se \: d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) \leq %\delta_0 \\
 %    0  \: \: \:  & altrimenti
 %  \end{cases}  \\
 %  \Rightarrow \boldsymbol{f_{rep}} = 
@@ -104,7 +104,7 @@ Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algorit
     \label{fig:LOS}
 \end{figure}
 
-\subsection{Sliding Mode Control}
+\subsection{Sliding Mode Control} \label{SMC_Theory}
 Lo Sliding Mode Control (SMC) \cite{algoSMC} è una strategia ad anello chiuso che rientra nella famiglia dei controlli robusti. L'obiettivo è far inseguire al sistema una traiettoria desiderata nello spazio degli stati. Il modello dinamico è noto con certi livelli di incertezza anch'essi noti:
 \begin{itemize}
     \item è disponibile un modello $\hat{f}(\boldsymbol {x})$;
@@ -126,7 +126,7 @@ Nell'SMC per raggiungere l'obiettivo viene definita una Sliding Surface (SS) def
     \item se il sistema non è sull'SS ci viene portato in un tempo finito;
     \item una volta che il sistema è sull'SS ce lo tiene nonostante le incertezze sul modello.
 \end{itemize}
-Dalla letteratura definiamo una SS del tipo $S(t)=s=0$, con s variabile di sliding. La variabile di sliding è una combinazione lineare degli stati errore del sistema ed è definita come:
+Esistono varie tipologie di SS, dalla letteratura definiamo per esempio $S(t)=s=0$, con s variabile di sliding. La variabile di sliding è una combinazione lineare degli stati errore del sistema ed è definita come:
 \begin{equation}
 s:=(\frac{d}{dt}+\lambda)^{n-1}\Tilde{\boldsymbol {x}}
 \end{equation}
