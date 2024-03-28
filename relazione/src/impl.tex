@@ -1,7 +1,7 @@
 \subsection{Nodo di controllo}
 
-\subsubsection{Intersezione retta-cerchio}
-Il primo passo è calcolare l'interseziuone tra la retta e il cerchio di raggio r, dove ricordiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. Impostando il sistema:
+\subsubsection{Aritificial Potential Field}
+Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio r. Ricodiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. Impostando il sistema:
 
 \begin{equation} 
 \begin{cases}
@@ -40,9 +40,8 @@ Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)
         \end{equation}
     \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $y=mx+q$ e la retta passante per le coordinate $(x_r, y_r)$ del rover.
 \end{itemize}
-\subsubsection{Aritificial Potential Field}
-Per implementare tale metodo, ricordando che il potenziale attrattivo scelto è di tipo Huber-like, si parte dalla definizione del gradiente del potenziale e si ricava la forza. Tale forza attrattiva sarà definita come:\\ \\ \\Per quanto rigurda invece il calcolo della derivata del potenziale repulsivo, si ottiene la forza repulsiva 
-
+Il punto così ottenuto è il $\boldsymbol{q_G}$ della \autoref{APF}.
+Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri
 
 \subsection{Nodo di visione}
 \subsection{SMC}
