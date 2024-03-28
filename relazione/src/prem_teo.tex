@@ -58,7 +58,7 @@ dove con $  \boldsymbol{q_G} $ si indica la configurazione obbiettivo e con $ \d
 Per il campo repulsivo dell'ostacolo $i$-esimo, invece è stato scelto
 \begin{equation}
   \begin{cases}
-    \frac{1}{\gamma} (\frac{a}{d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}} - \frac{1}{\delta_0})^\gamma \: \: \:  & se \: d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) \leq \delta_0 \\
+    \frac{1}{\gamma} (\frac{a}{d( \boldsymbol{q},  \boldsymbol{q_{obs_i})}} - \frac{1}{\delta_0})^\gamma \: \: \:  & se \: d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) \leq \delta_0 \\
     0  \: \: \:  & altrimenti
   \end{cases} 
 \end{equation}
@@ -172,5 +172,17 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
     \item Il contributo derivativo permette di aumentare la stabilità del sistema.
   \end{itemize}
 
-
-
+\subsection{Schemi anti wind-up}
+Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando e(t), che a causa della saturazione  rimane costante in segno, viene integrato.\\
+Quando poi cambia il segnale di riferimento, e(t) cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare cosi da uscire dalla saturazione. Questo può richiedete tempi lunghi con una conseguente perdita di reattività. \\
+Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
+ \begin{figure}[h]
+      \centering
+      \includegraphics[width=0.8\textwidth]{relazione/img/anti wind-up.JPG}
+      \caption{schema PID con back calculation and tracking}
+      \label{img:antiwindup}
+    \end{figure}
+In questa tesnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
+\begin{equation}
+U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s)}_\text{BC\&T}
+\end{equation}
