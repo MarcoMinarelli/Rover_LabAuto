@@ -181,6 +181,10 @@ class BBM_Control_Node : public rclcpp::Node{
 			v_max=7;
 			omega_max=1;
 			
+			
+			rho2 = computeRho2();
+			rho1 = computeRho1(rho2);
+			
 			rclcpp::QoS custom_qos(10);
 			auto sub_opt = rclcpp::SubscriptionOptions();
         	lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
@@ -258,8 +262,8 @@ class BBM_Control_Node : public rclcpp::Node{
 			double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-pose[2]);
 			
 			//SMC
-			double u1=-computeRho1(computeRho2())*sign(goal[0]-pose[0]);
-			double u2=-computeRho2()*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
+			double u1=-rho1*sign(goal[0]-pose[0]);
+			double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
 			
 			double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
 			double omega=omega_d-u2;
