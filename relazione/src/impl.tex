@@ -1,6 +1,6 @@
 \subsection{Nodo di controllo}
 
-\subsubsection{Aritificial Potential Field}
+\subsubsection{Artificial Potential Field}
 Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio r. Ricodiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. Impostando il sistema:
 
 \begin{equation} 
@@ -56,6 +56,47 @@ Si applicano quindi le formule viste in tale sottosezione con i seguenti paramet
 \end{table}
 
 \subsection{Nodo di visione}
+Gli obiettivi del nodo visione sono:
+\begin{enumerate}
+  \item riconoscere nell'immagine i markers ArUco;
+  \item localizzarli nella mappa;
+  \item ricavare l'id del marker e quindi il coefficiente angolare della retta a cui il robot dovrà convergere.
+\end{enumerate}
+  Per quanto riguarda il primo punto, la libreria OpenCV (\cite{opencv_library}) mette a disposizione un modulo che permette di ricavare la posizione degli angoli del 
+  marker e di ricavare l'id associato. \\
+  Riguardo il secondo punto, supponendo di conoscere la matrice di calibrazione $K$ della camera (\cite{multiple_view}) e la posizione dell'ArUco in coordinate omogenee 
+  $p_w = (X \: Y \: Z \: 1 )^T$, se definiamo il punto immagine come in coordinate pixel $ p_c =  (u \: v \: 1)^T$ si ottiene 
+    \begin{equation}
+    p_c \propto K [R | \boldsymbol{t}] p_w  \Rightarrow
+     \begin{bmatrix}
+           u \\
+           v \\
+           1
+        \end{bmatrix}
+         \propto 
+         \begin{bmatrix}
+           f_x & \sigma & c_x \\
+           0 & f_y & c_y \\
+           0 & 0 & 1 
+         \end{bmatrix}
+         \begin{bmatrix}
+           r_{11} & r_{12} & r_{13} & t_1 \\
+           r_{21} & r_{22} & r_{23} & t_2 \\
+           r_{31} & r_{32} & r_{33} & t_3 
+         \end{bmatrix}
+         \begin{bmatrix}
+           X \\
+           Y \\
+           Z \\
+           1
+    \end{bmatrix}
+  \end{equation}
+  con R matrice di rotazione e $ \boldsymbol{t}$ vettore che indica la traslazione tra la camera e il marker; calcolando questi due elementi si può ricavare la 
+  posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi, i queli possono essere richiamati dalla funzione 
+  \texttt{solve\_PnP()} della libreria. \\
+  A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
+  Infine, l'id del marker permette di ricavare il coefficiente angolare $m_{id}$. Supponendo che il marker giaccia sulla retta con tale $m$, si ricava il 
+  parametro mancante $q$ come $ q = y_A - m_{id}x_A$.
 \subsection{SMC}
 Come visto nella \autoref{SMC_Theory} per definire un controllo SMC si ha bisogno di una funzione $u$ che nel nostro caso è stata scelta pari a: 
 \begin{equation}
@@ -82,4 +123,3 @@ le superfici di sliding sono
     \caption{Sliding Mode Control}
     \label{fig:SMC}
 \end{figure}
-

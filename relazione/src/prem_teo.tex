@@ -31,7 +31,7 @@ ognuno dei quali può avere una propria frequenza di erogazione
 dati, accettare comandi o segnalare eventi.
 
  \subsection{Artificial Potential Field} \label{APF}
-Il metodo dei Campi Potenziali Artificiali (O in inglese "Artificial Potential Field", da cui l'acronimo APF), presentato per la prima volta in \cite{khatibAPF}, è un 
+Il metodo dei Campi Potenziali Artificiali (o in inglese "Artificial Potential Field", da cui l'acronimo APF), presentato per la prima volta in \cite{khatibAPF}, è un 
 metodo per la pianificazione del moto. Si considera il robot come una particella che si muove in un campo potenziale artificiale, il quale è a sua volta la somma di due 
 campi: un campo attrattivo (che attrae il robot verso il goal) e un campo repulsivo (che allontana il robot dagli ostacoli). \\
 Quindi, data la configurazione del robot $\boldsymbol{q}$, il campo totale è dato da 
@@ -88,7 +88,7 @@ Per il campo repulsivo dell'ostacolo $i$-esimo, invece è stato scelto
 \end{equation*}
 
 con $ \gamma = 2$, $ \boldsymbol{q_{obs_i}} $ la rappresentazione dell'ostacolo nello spazio delle configurazioni, con $ d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) $ la
-distanza tra il robot e l'ostacolo e infine con $ \delta_0 $ la sogli asopra la quale l'ostacolo non esercita nessuna influenza sul robot.
+distanza tra il robot e l'ostacolo e infine con $ \delta_0 $ la soglia sopra la quale l'ostacolo non esercita nessuna influenza sul robot.
 Uno dei vantaggi dell'algoritmo APF è che può essere impiegato per effettuare planning online, quindi senza conoscenza a priori della mappa e delle posizioni (o della 
 forma) degli ostacoli. Inoltre, grazie alla soglia sulla distanza degli ostacoli presente nel potenziale repulsivo, è possibile associare un potrenziale ad ogni oggetto rilevato entro tale distanza invece che cercare di ricostruirne la forma.
 
@@ -178,7 +178,7 @@ Quando poi cambia il segnale di riferimento, e(t) cambia segno ma prima di osser
 Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
  \begin{figure}[h]
       \centering
-      \includegraphics[width=0.8\textwidth]{relazione/img/anti wind-up.JPG}
+      \includegraphics[width=0.8\textwidth]{img/anti wind-up.JPG}
       \caption{schema PID con back calculation and tracking}
       \label{img:antiwindup}
     \end{figure}
