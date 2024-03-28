@@ -39,13 +39,13 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 		// Node params
 		float maxDist;
-		int markerSize; //TODO quanto è il lato del del marker??
+		int markerSize; //[cm]
 		
 	public:
 	
 		BBM_Vision_Node() : Node("bbm_vision_node"), pose(6,0), maxDist(0.5){
 			camera_matrix = cv::Matx33d::eye(); 
-			markerSize = 250;
+			markerSize = 20;
 			
 			rclcpp::QoS custom_qos(10);
 			
