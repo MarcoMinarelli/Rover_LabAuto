@@ -115,8 +115,23 @@ Definiti poi gli errori
 \end{equation}
 le superfici di sliding sono
 \begin{equation}
-       \sigma_1=e_1 \ \ \ \ \ \ \ \ \sigma_2=e_3-arcsin(f(e_2))
+       \sigma_1=e_1 \ \ \ \ \ \ \ \ \sigma_2=e_3-\arcsin(f(e_2))
 \end{equation} 
+dove $f(e_2)=-\min({\delta_1|e_2|^{-1},\ \delta_2})$ con $\delta_1 \in (0,1)$, $\delta_2>0$.\\ Per ottenere i guadagni $\rho_1$ e $\rho_2$ si calcolano i paramtri  $r_1$, $r_2$ e $r_3$ in tale modo
+\begin{equation}
+        r_1= \max\left\{\frac{\delta_1+d_1-d_3)\sqrt{1-\delta_1^{2}}}{1+d_3-d_1}v_{max}, \frac{(1+d_2)(\omega_{max}+\rho_2) \frac{\rho_1}{\rho_2}+d_2v_{max}}{1-d_1}\right\}
+\end{equation}
+\begin{equation}
+        r_2= \min\left\{\frac{\delta_1-d_3\sqrt{1-\delta_1^{2}}}{d_3}v_{min}, \frac{\delta_1}{d_3}-v_{max}\sqrt{1-\delta_1^{2}}\right\}
+\end{equation}
+\begin{equation}
+        r_3= \frac{\delta_1-d_3\sqrt{1-\delta_1^{2}}+\delta_2v_{max}+\delta_1v_{min}}{(1-d_2\sqrt{1-\delta_1^{2}}}
+\end{equation}
+e si sceglie $r_1<\rho_1<r_2$,\ \ $r_3<\rho_2$. Con tale scelta la dinamica dell'errore converge asintoticamente all'insieme
+\begin{equation}
+        D=\left\{(e_1,e_2,e_3) \in \mathbb{R}: e_1=0, \ \  |e_2|\le\delta_2^{-1}C, \ \ |e_3|\le \arcsin{(C)} \right\}
+\end{equation}
+con $C=\frac{d_3(\rho_1+v_{max}\sqrt{1-\delta_1^{2}})}{v_{min}}$.
 \begin{figure} [H]
     \centering
     \includegraphics[width=0.5\linewidth]{img/SMC.jpg}
