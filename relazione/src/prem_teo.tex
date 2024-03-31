@@ -1,6 +1,6 @@
 \subsection{ArUco marker}
 Un marcatore ArUco \cite{ArUco} è un marcatore quadrato sintetico composto da un ampio bordo nero e da una matrice binaria interna che ne determina l'identificatore.\\ 
-\`E importante notare che l'identificatore del marcatore non si ottiene convertendo la codifica binaria in un numero a base decimale. Ciò non è possibile poiché per dimensioni elevate dei marcatori il numero di bit è troppo elevato e gestire numeri così grandi non è pratico. Invece, un identificatore marcatore è semplicemente l'indice del marcatore all'interno del dizionario a cui appartiene.
+\`E importante notare che l'identificatore del marcatore non si ottiene convertendo la codifica binaria in un numero a base decimale. Ciò non è possibile poiché per dimensioni elevate dei marcatori il numero di bit è troppo elevato e gestire numeri così grandi non è pratico. Invece, l'identificatore del marcatore è semplicemente l'indice del marcatore all'interno del dizionario a cui appartiene.
 Il bordo nero ne facilita il rapido rilevamento nell'immagine e la codifica binaria ne consente l'identificazione, l'applicazione di tecniche di rilevamento e la correzione degli errori. La dimensione del marcatore determina la dimensione della matrice interna, ad esempio un marker di dimensione 6x6 è composto da 36 bit.\\
 I markers vengono raggruppati in set, chiamati dizionari, in funzione della dimensione che determina anche la grandezza della matrice interna. 
 Un marker può essere trovato ruotato nell'ambiente, tuttavia è necessario che il processo di rilevamento sia in grado di determinare la sua rotazione originaria, in modo che ogni angolo venga identificato in modo inequivocabile.\\
@@ -106,23 +106,23 @@ Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algorit
 \end{figure}
 
 \subsection{Sliding Mode Control} \label{SMC_Theory}
-Lo Sliding Mode Control (SMC) \cite{algoSMC} è una strategia ad anello chiuso che rientra nella famiglia dei controlli robusti. L'obiettivo è far inseguire al sistema una traiettoria desiderata nello spazio degli stati. Il modello dinamico è noto con certi livelli di incertezza anch'essi noti:
+Lo Sliding Mode Control (SMC) \cite{SMCOriginal} è una strategia ad anello chiuso che rientra nella famiglia dei controlli robusti. L'obiettivo è far inseguire al sistema una traiettoria desiderata nello spazio degli stati. Il modello dinamico è noto con certi livelli di incertezza anch'essi noti:
 \begin{itemize}
     \item è disponibile un modello $\hat{f}(\boldsymbol {x})$;
     \item è disponibile un modello $\hat{b}(\boldsymbol {x})$.
 \end{itemize}
-L'incertezza su f è di tipo additivo tale per cui:
+L'incertezza su $f$ è di tipo additivo tale per cui:
 \begin{equation}
 |f(\boldsymbol {x})-\hat{f}(\boldsymbol {x})|\leq F(\boldsymbol {x})
 \end{equation}
 con $F(\boldsymbol {x})$ nota. \\
-L'incertezza su b è tale per cui:
+L'incertezza su $b$ è tale per cui:
 \begin{equation}
 \frac{1}{\beta} \leq \frac{b}{\hat{b}}\leq \beta
 \end{equation}
 con $\beta$ >1.
 \\
-Nell'SMC per raggiungere l'obiettivo viene definita una Sliding Surface (SS) definita nello spazio di stato, la quale ha la proprietà di far tendere la dinamica dell'errore a zero. \\ Il sistema di controllo genera l'input di controllo u in modo che:
+Nell'SMC per raggiungere l'obiettivo viene definita una Sliding Surface (SS) definita nello spazio di stato, la quale ha la proprietà di far tendere la dinamica dell'errore a zero. \\ Il sistema di controllo genera l'input di controllo $u$ in modo che:
 \begin{itemize}
     \item se il sistema non è sull'SS ci viene portato in un tempo finito;
     \item una volta che il sistema è sull'SS ce lo tiene nonostante le incertezze sul modello.
@@ -133,12 +133,12 @@ s:=(\frac{d}{dt}+\lambda)^{n-1}\Tilde{\boldsymbol {x}}
 \end{equation}
 con $\Tilde{\boldsymbol {x}}:=\boldsymbol {x}-\boldsymbol {x_d}$ e $\lambda>0$.
 \\
-L'input di controllo u è definito come: $u:=\hat{u}+u_{disc}$ dove $\hat{u}$ è una parte model based mentre $u_{disc}$ serve per dare robustezza. \\
+L'input di controllo $u$ è definito come: $u:=\hat{u}+u_{disc}$ dove $\hat{u}$ è una parte model based mentre $u_{disc}$ serve per dare robustezza. \\
 Per definire $\hat{u}$ si sfrutta la condizione di permanenza del sistema sulla SS, \\$\dot{s}=\boldsymbol {x}^{(n)}-r^n=0$, da cui con l'ipotesi di modello esatto si ricava $\hat{u}$ come:
 \begin{equation}
 \hat{u}=\frac{1}{\hat{b}(\boldsymbol {x})}(-\hat{f}(\boldsymbol {x})+r^n)
 \end{equation}
-Tale termine non ci assicura però nè che la SS venga raggiunta nè che si abbia la permanenza sull'SS in condizioni reali.\\
+Tale termine non ci assicura però né che la SS venga raggiunta né che si abbia la permanenza sull'SS in condizioni reali.\\
 Per tale motivo si definisce la condizione di sliding $s\dot{s}\leq -\eta|s|$ la quale ci assicura il raggiungimento della SS in un tempo finito. Dalla sliding condition dobbiamo poi sintetizzare $u_{disc}$, quindi scegliendo dalla letteratura:
 \begin{equation}
 u_{disc}=-\frac{K}{\hat{b}}sgn(s)
@@ -174,8 +174,8 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
   \end{itemize}
 
 \subsubsection{Schemi anti wind-up}
-Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando e(t), che a causa della saturazione  rimane costante in segno, viene integrato.\\
-Quando poi cambia il segnale di riferimento, e(t) cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare cosi da uscire dalla saturazione. Questo può richiedete tempi lunghi con una conseguente perdita di reattività. \\
+Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
+Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare cosi da uscire dalla saturazione. Questo può richiedete tempi lunghi con una conseguente perdita di reattività. \\
 Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
  \begin{figure}[h]
       \centering
