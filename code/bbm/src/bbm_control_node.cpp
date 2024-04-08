@@ -104,21 +104,21 @@ class BBM_Control_Node : public rclcpp::Node{
 		
 		/** Method that returns the difference v1 - v2 **/
 		std::vector<double> minus(std::vector<double> v1, std::vector<double> v2){
-			if(v1.size()!=v2.size())
-				return;
 			std::vector<double> ret(v1.size(), 0);
-			for(int i=0; i<v1.size(); i++)
-				ret[i]=v1[i]-v2[i];
+			if(v1.size()==v2.size()){
+				for(int i=0; i<v1.size(); i++)
+					ret[i]=v1[i]-v2[i];
+			}
 			return ret;
 		}
 		
 		/** Method that returns the sum v1 + v2 **/
 		std::vector<double> sum(std::vector<double> v1, std::vector<double> v2){
-			if(v1.size()!=v2.size())
-				return;
 			std::vector<double> ret(v1.size(), 0);
-			for(int i=0; i<v1.size(); i++)
-				ret[i]=v1[i]+v2[i];
+			if(v1.size()==v2.size()){
+				for(int i=0; i<v1.size(); i++)
+					ret[i]=v1[i]+v2[i];
+			}
 			return ret;
 		}
 		
@@ -187,9 +187,9 @@ class BBM_Control_Node : public rclcpp::Node{
 			
 			rclcpp::QoS custom_qos(10);
 			auto sub_opt = rclcpp::SubscriptionOptions();
-        	lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
-        	laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
-        	poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
+        		lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
+        		laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
+        		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
   			timer_ = this->create_wall_timer(10ms, std::bind(&BBM_Control_Node::controlCallback, this));
   			vel_pub= create_publisher<geometry_msgs::msg::Twist> ("/cmd_vel", custom_qos);
       			RCLCPP_INFO(this->get_logger(), "BBM_Control_Node started");
@@ -228,7 +228,8 @@ class BBM_Control_Node : public rclcpp::Node{
 		/** function used in SMC. If e2 ==0, then 1/|e2| = inf and so min is delta2 **/
 		double f(double e2){ 
 			if (e2==0) return delta2;
-			return ( (delta1*(1/fabs(e2))<delta2)? (delta1*(1/fabs(e2)) : delta2 )*(-e2); 	
+			double v = delta1*(1/fabs(e2))<delta2? delta1*(1/fabs(e2)) : delta2 ;
+			return v*(-e2); 	
 		}
 		
 		/** From [1] **/
@@ -268,7 +269,7 @@ class BBM_Control_Node : public rclcpp::Node{
 			double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
 			double omega=omega_d-u2;
 			
-			geometry_msgs::msgs::Twist msg;
+			geometry_msgs::msg::Twist msg;
 			msg.linear.x=v;
 			msg.angular.z=omega;
 			vel_pub -> publish(msg);
