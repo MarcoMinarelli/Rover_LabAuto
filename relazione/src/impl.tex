@@ -62,22 +62,22 @@ si sostituisce la seconda equazione nella prima
 \end{equation}
 
 \begin{equation*}
-\Rightarrow y^2+\underbrace{(-2y_r)}_\text{b}y+\underbrace{(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}_\text{c}=0
+\Rightarrow y^2+\underbrace{(-2y_r)}_\text{b}y+\underbrace{(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}_\text{c}=0
 \end{equation*}
-Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)$. \\Se:
+Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
 \begin{itemize}
     \item $\Delta>0$ si hanno due soluzioni
         \begin{equation}
-        x_1=\frac{(2y_r)+\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}}{2}
+        y_1=\frac{(2y_r)+\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
         \end{equation}
         \\
         \begin{equation}
-        x_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}}{2}
+        y_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
         \end{equation}
-        Di queste due soluzioni si sceglie quella più lontana rispetto alla posizione dell'ArUco.
+        %Di queste due soluzioni si sceglie quella più lontana %rispetto alla posizione dell'ArUco.
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
-        x_d=y_r
+        y_d=y_r
         \end{equation}
     \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $x=cost$ e la retta $y=cost$ pasante per $y_r$.
 \end{itemize}
