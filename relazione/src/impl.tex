@@ -1,7 +1,9 @@
 \subsection{Nodo di controllo}
 
 \subsubsection{APF}
-Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio $r$. Ricordiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. Impostando il sistema:
+Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio $r$. Ricordiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. \\
+Si possono distinguere due casi, quello in cui la retta è definita come $y=mx+q$ e quello in cui si ha $x=cost$.\\
+Riferendoci al primo caso, si imposta il sistema:
 
 \begin{equation} 
 \begin{cases}
@@ -39,6 +41,45 @@ Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)
         x_d=\frac{-(2mq-2x_r-2my_r)}{2(1+m^2)}
         \end{equation}
     \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $y=mx+q$ e la retta passante per le coordinate $(x_r, y_r)$ del rover.
+\end{itemize}
+Riferendoci al secondo caso invece, si imposta il sistema:
+
+\begin{equation} 
+\begin{cases}
+
+    (x-x_r)^2+(y-y_r)^2=r^2
+   \\
+    x=x_a 
+  \end{cases} 
+\end{equation}
+si sostituisce la seconda equazione nella prima
+\begin{equation*}
+(x_a-x_r)^2+(y-y_r)^2=r^2
+\end{equation*}
+
+\begin{equation}
+\Rightarrow x_a^2+x_r^2-2x_ax_r+y^2+y_r^2-2yy_r-r^2=0
+\end{equation}
+
+\begin{equation*}
+\Rightarrow y^2+\underbrace{(-2y_r)}_\text{b}y+\underbrace{(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}_\text{c}=0
+\end{equation*}
+Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)$. \\Se:
+\begin{itemize}
+    \item $\Delta>0$ si hanno due soluzioni
+        \begin{equation}
+        x_1=\frac{(2y_r)+\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}}{2}
+        \end{equation}
+        \\
+        \begin{equation}
+        x_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-x_r^2)}}{2}
+        \end{equation}
+        Di queste due soluzioni si sceglie quella più lontana rispetto alla posizione dell'ArUco.
+    \item $\Delta=0$ si ha una sola soluzione
+    \begin{equation}
+        x_d=y_r
+        \end{equation}
+    \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $x=cost$ e la retta $y=cost$ pasante per $y_r$.
 \end{itemize}
 Il punto così ottenuto è il $\boldsymbol{q_G}$ della \autoref{APF}.
 Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri
