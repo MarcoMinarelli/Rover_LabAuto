@@ -1,101 +1,3 @@
-\subsection{Nodo di controllo}
-
-\subsubsection{APF}
-Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio $r$. Ricordiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. \\
-Si possono distinguere due casi, quello in cui la retta è definita come $y=mx+q$ e quello in cui si ha $x=cost$.\\
-Riferendoci al primo caso, si imposta il sistema:
-
-\begin{equation} 
-\begin{cases}
-
-    (x-x_r)^2+(y-y_r)^2=r^2
-   \\
-    y=mx+q 
-  \end{cases} 
-\end{equation}
-si sostituisce la seconda equazione nella prima
-\begin{equation*}
-(x-x_r)^2+(mx+q-y_r)^2=r^2
-\end{equation*}
-
-\begin{equation}
-\Rightarrow x^2+x_r^2-2xx_r+m^2x^2+q^2+y_r^2+2mxq-2mqy_r-2mxy_r-r^2=0
-\end{equation}
-
-\begin{equation*}
-\Rightarrow \underbrace{(1+m^2)}_\text{a}x^2+\underbrace{(2mq-2x_r-2my_r)}_\text{b}x+\underbrace{(x_r^2+q^2+y_r^2-2qy_r-r^2)}_\text{c}=0
-\end{equation*}
-Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)$. \\Se:
-\begin{itemize}
-    \item $\Delta>0$ si hanno due soluzioni
-        \begin{equation}
-        x_1=\frac{-(2mq-2x_r-2my_r)+\sqrt{2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)}}{2(1+m^2)}
-        \end{equation}
-        \\
-        \begin{equation}
-        x_2=\frac{-(2mq-2x_r-2my_r)-\sqrt{2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)}}{2(1+m^2)}
-        \end{equation}
-        Di queste due soluzioni si sceglie quella più lontana rispetto alla posizione dell'ArUco.
-    \item $\Delta=0$ si ha una sola soluzione
-    \begin{equation}
-        x_d=\frac{-(2mq-2x_r-2my_r)}{2(1+m^2)}
-        \end{equation}
-    \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $y=mx+q$ e la retta passante per le coordinate $(x_r, y_r)$ del rover.
-\end{itemize}
-Riferendoci al secondo caso invece, si imposta il sistema:
-
-\begin{equation} 
-\begin{cases}
-
-    (x-x_r)^2+(y-y_r)^2=r^2
-   \\
-    x=x_a 
-  \end{cases} 
-\end{equation}
-si sostituisce la seconda equazione nella prima
-\begin{equation*}
-(x_a-x_r)^2+(y-y_r)^2=r^2
-\end{equation*}
-
-\begin{equation}
-\Rightarrow x_a^2+x_r^2-2x_ax_r+y^2+y_r^2-2yy_r-r^2=0
-\end{equation}
-
-\begin{equation*}
-\Rightarrow y^2+\underbrace{(-2y_r)}_\text{b}y+\underbrace{(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}_\text{c}=0
-\end{equation*}
-Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
-\begin{itemize}
-    \item $\Delta>0$ si hanno due soluzioni
-        \begin{equation}
-        y_1=\frac{(2y_r)+\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
-        \end{equation}
-        \\
-        \begin{equation}
-        y_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
-        \end{equation}
-        %Di queste due soluzioni si sceglie quella più lontana %rispetto alla posizione dell'ArUco.
-    \item $\Delta=0$ si ha una sola soluzione
-    \begin{equation}
-        y_d=y_r
-        \end{equation}
-    \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $x=cost$ e la retta $y=cost$ pasante per $y_r$.
-\end{itemize}
-Il punto così ottenuto è il $\boldsymbol{q_G}$ della \autoref{APF}.
-Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri
-
-\begin{table} [H]
-    \centering
-    \begin{tabular}{|cc|}
-    \hline
-        Parametro & Valore usato \\  \hline
-        $k_a$ &      \\  \hline
-        $k_r$ &    \\  \hline
-        $\delta$ &    \\  \hline
-        $\delta_0$ &    \\  \hline
-    \end{tabular}
-\end{table}
-
 \subsection{Nodo di visione}
 Gli obiettivi del nodo visione sono:
 \begin{enumerate}
@@ -143,7 +45,112 @@ Gli obiettivi del nodo visione sono:
   A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
   Infine, l'id del marker permette di ricavare il coefficiente angolare $m_{id}$. Supponendo che il marker giaccia sulla retta con tale $m$, si ricava il 
   parametro mancante $q$ come $ q = y_A - m_{id}x_A$.
-\subsection{SMC}
+  
+\subsection{Nodo di controllo}
+\subsubsection{APF}
+Per poter utilizzare tale tipologia di controllo bisogna calcolare il \textit{goal} dinamicamente, cioè calcolare l'intersezione tra la retta e il cerchio di raggio $r$. Ricordiamo che le coordinate $(x_r,y_r)$ coincidono con quelle del rover. \\
+Si possono distinguere due casi, quello in cui la retta è definita come $y=mx+q$ e quello in cui si ha $x=cost$.\\
+Riferendoci al primo caso, si imposta il sistema:
+\begin{equation} 
+\begin{cases}
+
+    (x-x_r)^2+(y-y_r)^2=r^2
+   \\
+    y=mx+q 
+  \end{cases} 
+\end{equation}
+si sostituisce la seconda equazione nella prima
+\begin{equation*}
+(x-x_r)^2+(mx+q-y_r)^2=r^2
+\end{equation*}
+
+\begin{equation}
+\Rightarrow x^2+x_r^2-2xx_r+m^2x^2+q^2+y_r^2+2mxq-2mqy_r-2mxy_r-r^2=0
+\end{equation}
+
+\begin{equation*}
+\Rightarrow \underbrace{(1+m^2)}_\text{a}x^2+\underbrace{(2mq-2x_r-2my_r)}_\text{b}x+\underbrace{(x_r^2+q^2+y_r^2-2qy_r-r^2)}_\text{c}=0
+\end{equation*}
+Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)$. \\Se:
+\begin{itemize}
+    \item $\Delta>0$ si hanno due soluzioni
+        \begin{equation}
+        x_1=\frac{-(2mq-2x_r-2my_r)+\sqrt{2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)}}{2(1+m^2)}
+        \end{equation}
+        \\
+        \begin{equation}
+        x_2=\frac{-(2mq-2x_r-2my_r)-\sqrt{2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)}}{2(1+m^2)}
+        \end{equation}
+        Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
+        Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
+        \begin{itemize}
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il river giri a sinistra
+        \end{itemize}
+    \item $\Delta=0$ si ha una sola soluzione
+    \begin{equation}
+        x_d=\frac{-(2mq-2x_r-2my_r)}{2(1+m^2)}
+        \end{equation}
+    \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $y=mx+q$ e la retta passante per le coordinate $(x_r, y_r)$ del rover.
+\end{itemize}
+Riferendoci al secondo caso invece, si imposta il sistema:
+
+\begin{equation} 
+\begin{cases}
+
+    (x-x_r)^2+(y-y_r)^2=r^2
+   \\
+    x=x_a 
+  \end{cases} 
+\end{equation}
+si sostituisce la seconda equazione nella prima
+\begin{equation*}
+(x_a-x_r)^2+(y-y_r)^2=r^2
+\end{equation*}
+
+\begin{equation}
+\Rightarrow x_a^2+x_r^2-2x_ax_r+y^2+y_r^2-2yy_r-r^2=0
+\end{equation}
+
+\begin{equation*}
+\Rightarrow y^2+\underbrace{(-2y_r)}_\text{b}y+\underbrace{(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}_\text{c}=0
+\end{equation*}
+Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
+\begin{itemize}
+    \item $\Delta>0$ si hanno due soluzioni
+        \begin{equation}
+        y_1=\frac{(2y_r)+\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
+        \end{equation}
+        \\
+        \begin{equation}
+        y_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
+        \end{equation}
+  Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
+        Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
+        \begin{itemize}
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il river giri a sinistra
+        \end{itemize}    \item $\Delta=0$ si ha una sola soluzione
+    \begin{equation}
+        y_d=y_r
+        \end{equation}
+    \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $x=cost$ e la retta $y=cost$ pasante per $y_r$.
+\end{itemize}
+Il punto così ottenuto è il $\boldsymbol{q_G}$ della \autoref{APF}.
+Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri
+
+\begin{table} [H]
+    \centering
+    \begin{tabular}{|cc|}
+    \hline
+        Parametro & Valore usato \\  \hline
+        $k_a$ &      \\  \hline
+        $k_r$ &    \\  \hline
+        $\delta$ &    \\  \hline
+        $\delta_0$ &    \\  \hline
+    \end{tabular}
+\end{table}
+\subsubsection{SMC}
 Come visto nella \autoref{SMC_Theory} per definire un controllo SMC si ha bisogno di una funzione $u$ che nel nostro caso è stata scelta seguendo \cite{algoSMC}: 
 \begin{equation}
         u_i=-\rho_{i}sign(\sigma_i)\: \: \: \: \: \: \: \:i=1,2
@@ -171,7 +178,7 @@ dove $f(e_2)=-\min({\delta_1|e_2|^{-1},\ \delta_2})$ con $\delta_1 \in (0,1)$, $
         r_2= \min\left\{\frac{\delta_1-d_3\sqrt{1-\delta_1^{2}}}{d_3}v_{min}, \frac{\delta_1}{d_3}-v_{max}\sqrt{1-\delta_1^{2}}\right\}
 \end{equation}
 \begin{equation}
-        r_3= \frac{\delta_1-d_3\sqrt{1-\delta_1^{2}}+\delta_2v_{max}+\delta_1v_{min}}{(1-d_2\sqrt{1-\delta_1^{2}}}
+        r_3= \frac{\delta_1-d_3\sqrt{1-\delta_1^{2}}+\delta_2v_{max}+\delta_1v_{min}}{(1-d_2\sqrt{1-\delta_1^{2}})}
 \end{equation}
 e si sceglie $r_1<\rho_1<r_2$,\ \ $r_3<\rho_2$. Con tale scelta la dinamica dell'errore converge asintoticamente all'insieme
 \begin{equation}
@@ -185,3 +192,29 @@ con $C=\frac{d_3(\rho_1+v_{max}\sqrt{1-\delta_1^{2}})}{v_{min}}$.
     \caption{Sliding Mode Control}
     \label{fig:SMC}
 \end{figure}
+
+
+\begin{table} [H]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+        Misurazione & Distanza ruota destra (cm) & Distanza ruota sinistra (cm) & Angolo (°) \\  \hline
+        1 & 22 & 21.5& 6.200 \\  \hline
+        2 & 14& 15& 4.145  \\  \hline
+        3 & 13.5&15&  4.075 \\  \hline
+        4 & 14.5&15&  4.218 \\  \hline
+        5 & 15.5& 17& 4.640 \\  \hline
+        6 & 15&16.5& 4.500  \\  \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Nodo convertitore}
+Tale nodo è stato implementetato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
+Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover.\\ Per passare dalla velocità angolare all'accelerazione usiamo invece la derivta discreta
+
+\begin{equation}
+\omega(t+1)=\frac{\theta(t)-\theta(t-1)}{\Delta{T}} \ \ \
+\Rightarrow \ \ \ \theta(t+1)=\theta(t)+\omega(t)\Delta{T}
+\end{equation}  
+in tale modo riusciamo a pilotare il rover.
+
