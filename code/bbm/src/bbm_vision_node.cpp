@@ -16,9 +16,12 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+// tf2 includes
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Transform.h>
 
+#include "bbm_interfaces/msg/lineparams.hpp"
 
 #include "aruco.hpp"
 
@@ -31,7 +34,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camInfoSub;
 		rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr poseSub;
 		
-		sclcpp::Publisher<bbm_interfaces::msg::Lineparams>::SharedPtr paramsPub;
+		rclcpp::Publisher<bbm_interfaces::msg::Lineparams>::SharedPtr paramsPub;
 		
 		std::vector<double> pose; // pose = [x_r, y_r, z_r, roll, pitch, yaw]
 		
@@ -41,7 +44,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 		// Node params
 		float maxDist;
-		int markerSize; //[cm]
+		int markerSize; //[m]
 		
 		
 		
@@ -70,12 +73,18 @@ class BBM_Vision_Node : public rclcpp::Node{
 		std::pair<bool, double> getAngularCoefficient(int id, cv::Vec3d t, cv::Vec3d c){
 			std::pair<bool, double> ret;
 			cv::Mat cv_rot(3, 3, CV_64F);
-			cv::Rodrigues(r, cv_rot);
+			cv::Rodrigues(c, cv_rot);
+			
+			cv::Mat rot_t = cv_rot.t();
 			
 			// Top right corner in ArUco coordinate frame: (size/2, size/2, 0) while top left is (-size/2, -size/2, 0). In order to get position in camera coordinate frame, 
 			// we compute R * point_ArUco_frame + t
-			cv::Vec3d topRightCorner = cv_rot.t() * cv::Vec3d(markerSize/2, markerSize/2, 0) + t;
-			cv::Vec3d topLeftCorner = cv_rot.t() * cv::Vec3d(-markerSize/2, -markerSize/2, 0) + t;
+			cv::Mat v = rot_t * cv::Mat(cv::Vec3d(markerSize/2, markerSize/2, 0));
+			cv::Vec3d topRightCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2))+ t;
+			
+			
+			rot_t * cv::Mat(cv::Vec3d(-markerSize/2, -markerSize/2, 0));
+			cv::Vec3d topLeftCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2)) + t;
 			
 			// compute yaw angle between robot coordinate system and corners
 			double angleRight = getAngle(topRightCorner, c);
@@ -92,6 +101,8 @@ class BBM_Vision_Node : public rclcpp::Node{
 			//Computing the slope of the line that contains both markers' corners. If the marker id is 0 or 1, we'll use this
 			ret = getParallelLineAngularCoefficient(leftPoint, rightPoint);
 			
+			double m;
+			bool ok;
 			if(id == 2){ //desired line forms 45° respect to ArUco
 				if(ret.first && ret.second != 1){ //if the line is not vertical and has slope !=1 
 					m = ((ret.second + 1)/(1 - ret.second)); // m is the tangent of the line parallel to ArUco, we want it rotated by 45°, tan(45°) = 1, the we apply the sum of tangent formula
@@ -114,7 +125,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 					ok = true;
 					m = -1;
 				}
-			}else if(id == 5){
+			}else if(id == 4){
 				ok = true;
 				m = 0;
 			}
@@ -123,7 +134,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 		
 		/** Method that given a translation and rotation compute the angle (on xy plane) of the object wrt robots' x axis **/
-		double getAngle(cv::Vec3d t, cv::Vec3d r){
+		double getAngle(cv::Vec3d t, cv::Vec3d c){
 		
 			tf2::Transform img2aruco;
 			tf2::Transform aruco2img;
@@ -136,7 +147,7 @@ class BBM_Vision_Node : public rclcpp::Node{
   
 			tf2::Vector3 tf2_origin(t[0], t[1], t[2]);
 			cv::Mat cv_rot(3, 3, CV_64F);
-			cv::Rodrigues(r, cv_rot);
+			cv::Rodrigues(c, cv_rot);
 				  
 			tf2::Matrix3x3 tf2_rot(cv_rot.at<double>(0, 0), cv_rot.at<double>(0, 1), cv_rot.at<double>(0, 2), 
 			cv_rot.at<double>(1, 0), cv_rot.at<double>(1, 1), cv_rot.at<double>(1, 2), cv_rot.at<double>(2, 0), 
@@ -145,7 +156,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 			tf2::Transform pose_aruco(tf2_rot, tf2_origin);
 				
 			tf2::Transform pose_img;
-			pose_img.mult(_img2aruco, pose_aruco);
+			pose_img.mult(img2aruco, pose_aruco);
 			pose_img = pose_img.inverse();
 			pose_img.getBasis().getRPY(r, p, y); // get rpy angles
 			return y;		
@@ -155,7 +166,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		size_t getClosestMarker(std::vector<cv::Vec3d> tvecs){
 			size_t ret = 999;
 		  	double nearest_distance = 1e9;
-		  	for (size_t i = 0; i < ids.size(); i++) {
+		  	for (size_t i = 0; i < tvecs.size(); i++) {
 				double x = tvecs[i](0);
 				double y = tvecs[i](1);
 				double z = tvecs[i](2);
@@ -174,7 +185,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 	
 		BBM_Vision_Node() : Node("bbm_vision_node"), pose(6,0), maxDist(0.5){
 			camera_matrix = cv::Matx33d::eye(); 
-			markerSize = 20;
+			markerSize = 0.172;
 			
 			rclcpp::QoS custom_qos(10);
 			
@@ -199,13 +210,13 @@ class BBM_Vision_Node : public rclcpp::Node{
 			double roll, pitch, yaw;
 			m.getRPY(roll, pitch, yaw);
 		    	
-		    pose[0] =  msg->pose.position.x;
-		    pose[1] =  msg->pose.position.y;
-		    pose[2] =  msg->pose.position.z;
+			pose[0] =  msg->pose.position.x;
+		    	pose[1] =  msg->pose.position.y;
+		    	pose[2] =  msg->pose.position.z;
 		    	
-		    pose[3] =  roll;
-		    pose[4] =  pitch;
-		    pose[5] =  yaw;
+		    	pose[3] =  roll;
+		    	pose[4] =  pitch;
+		    	pose[5] =  yaw;
 		}
 		
 		/** Method that elaborates left image: scans for ArUco markers, if found then compute the position of the marker, get the line angular coefficient (from the marker id) and finally 
@@ -219,7 +230,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 				// Find ArUco markers 
 				std::vector<int> markerIds;
 				std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
-				aruco::Dictionary dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_250); //FIXME quale dizionario?
+				aruco::Dictionary dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_250); 
 				aruco::detectMarkers(img, dictionary, markerCorners, markerIds);
 				
 				std::vector<cv::Vec3d> rvecs, tvecs;
@@ -237,7 +248,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 					double y_a = pose[1] + r*sin(pose[5] + markerAngle);
 					
 
-					std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], tvecs[closestMarker], cvecs[closestMarker]);
+					std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], tvecs[closestMarker], rvecs[closestMarker]);
 					// if res.first == true, then the line can be represented as y = m*x +q
 					if(res.first){
 						m = res.second;
@@ -253,11 +264,11 @@ class BBM_Vision_Node : public rclcpp::Node{
 					msg.m = m;
 					msg.q = q;
 					msg.vert = !res.first;
-					msg.dir = (id == 0 || id == 2 || id == 3) ? true: false; // direction of the line
-					msg.end = (id == 5); // have we found the terminal ArUco?
+					msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2) ? true: false; // direction of the line
+					msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
 					
 					
-					paramsPub.publish(msg);
+					paramsPub -> publish(msg);
 				} 	
 			}catch (cv_bridge::Exception& e){
 				RCLCPP_INFO(this->get_logger(), "Immagine non ottenuta");
