@@ -43,8 +43,8 @@ class BBM_Vision_Node : public rclcpp::Node{
 		cv::Matx<float, 4, 1> dist_coeffs = cv::Vec4f::zeros(); 
 		
 		// Node params
-		float maxDist;
-		int markerSize; //[m]
+		float maxDist = 0.6f;
+		float markerSize = 0.17f; //[m]
 		
 		
 		
@@ -163,16 +163,12 @@ class BBM_Vision_Node : public rclcpp::Node{
 		}
 		
 		/** Method that given the transaltion of a lsit of markers returns the index of closest one **/
-		size_t getClosestMarker(std::vector<cv::Vec3d> tvecs){
-			size_t ret = 999;
+		int getClosestMarker(std::vector<cv::Vec3d> tvecs){
+			int ret = -1;
 		  	double nearest_distance = 1e9;
-		  	for (size_t i = 0; i < tvecs.size(); i++) {
-				double x = tvecs[i](0);
-				double y = tvecs[i](1);
-				double z = tvecs[i](2);
-				double current_distance = sqrt(x * x + y * y + z * z);
-				if (nearest_distance > current_distance) {
-			  		nearest_distance = current_distance;
+		  	for (int i = 0; i < tvecs.size(); i++) {
+				if (nearest_distance > tvecs[i](2)) {
+			  		nearest_distance = tvecs[i](2);
 			  		ret = i;
 				}
 		  }
@@ -183,9 +179,8 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 	public:
 	
-		BBM_Vision_Node() : Node("bbm_vision_node"), pose(6,0), maxDist(0.5){
+		BBM_Vision_Node() : Node("bbm_vision_node"), pose(6,0){
 			camera_matrix = cv::Matx33d::eye(); 
-			markerSize = 0.172;
 			
 			rclcpp::QoS custom_qos(10);
 			
@@ -200,7 +195,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 		/** Method that saves the pose for later computation **/
 		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
-			
+			//RCLCPP_INFO(this->get_logger(), "Pose ");
 			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
 
 			// 3x3 Rotation matrix from quaternion
@@ -222,59 +217,74 @@ class BBM_Vision_Node : public rclcpp::Node{
 		/** Method that elaborates left image: scans for ArUco markers, if found then compute the position of the marker, get the line angular coefficient (from the marker id) and finally 
 			sends the parameters of the line towards the robot has to converge **/
 		void leftImageCallback(const sensor_msgs::msg::Image::SharedPtr msg){
-			cv_bridge::CvImagePtr cv_ptr;
+			
 			try{
-				cv::Mat img;
-				rotate((cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)) -> image, img, 1); // rotate image 180°
+				//cv::Mat img;
+				void *data = const_cast<void *>(reinterpret_cast<const void *>(&msg->data[0]));
+  				cv::Mat img(msg->height, msg->width, CV_8UC4, data);
+  				cv::cvtColor(img, img, cv::COLOR_BGRA2BGR);
+				//cv::rotate(img, img, 1);
+				
+
 			
 				// Find ArUco markers 
 				std::vector<int> markerIds;
 				std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
 				aruco::Dictionary dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_250); 
 				aruco::detectMarkers(img, dictionary, markerCorners, markerIds);
+
+				
 				
 				std::vector<cv::Vec3d> rvecs, tvecs;
 				aruco::estimatePoseSingleMarkers( markerCorners, markerSize, camera_matrix, dist_coeffs, rvecs, tvecs);
 				
-				size_t closestMarker = getClosestMarker(tvecs);
-				if(sqrt(tvecs[closestMarker](0) * tvecs[closestMarker](0) + tvecs[closestMarker](1) * tvecs[closestMarker](1)) < maxDist){ 
-					double m, q;
-					double markerAngle = getAngle(tvecs[closestMarker], rvecs[closestMarker]);
-					
-					
-					// Line params computation
-					double r = sqrt(tvecs[closestMarker](0) * tvecs[closestMarker](0) + tvecs[closestMarker](1) * tvecs[closestMarker](1) ); // distance in 2d between robot and marker
-					double x_a = pose[0] + r*cos(pose[5] + markerAngle);
-					double y_a = pose[1] + r*sin(pose[5] + markerAngle);
-					
+				
+				int closestMarker = getClosestMarker(tvecs);
+				//RCLCPP_INFO(this->get_logger(), "Closest marker id: %d", closestMarker);
+				if(closestMarker >= 0){
+					double r =tvecs[closestMarker](2); 
+				
+					RCLCPP_INFO(this->get_logger(), "Marker id: %d dist: %f", markerIds[closestMarker], r);
+					if(r < maxDist){ 
+						
+						double m, q;
+						double markerAngle = getAngle(tvecs[closestMarker], rvecs[closestMarker]);
+						
+						
+						// Line params computation
+						
+						double x_a = pose[0] + r*cos(pose[5] + markerAngle);
+						double y_a = pose[1] + r*sin(pose[5] + markerAngle);
+						
 
-					std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], tvecs[closestMarker], rvecs[closestMarker]);
-					// if res.first == true, then the line can be represented as y = m*x +q
-					if(res.first){
-						m = res.second;
-						q = y_a - m * x_a;
-					}else{
-						m = 0;
-						q = 0;
+						std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], tvecs[closestMarker], rvecs[closestMarker]);
+						// if res.first == true, then the line can be represented as y = m*x +q
+						if(res.first){
+							m = res.second;
+							q = y_a - m * x_a;
+						}else{
+							m = 0;
+							q = 0;
+						}
+						// Lineparams message creation
+						bbm_interfaces::msg::Lineparams msg;
+						msg.x = x_a;
+						msg.y = y_a;
+						msg.m = m;
+						msg.q = q;
+						msg.vert = !res.first;
+						msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2) ? true: false; // direction of the line
+						msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
+						
+						
+						paramsPub -> publish(msg);
+						
+						//RCLCPP_INFO(this->get_logger(), "LeftImage");
 					}
-					// Lineparams message creation
-					bbm_interfaces::msg::Lineparams msg;
-					msg.x = x_a;
-					msg.y = y_a;
-					msg.m = m;
-					msg.q = q;
-					msg.vert = !res.first;
-					msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2) ? true: false; // direction of the line
-					msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
-					
-					
-					paramsPub -> publish(msg);
-				} 	
+				}	
 			}catch (cv_bridge::Exception& e){
 				RCLCPP_INFO(this->get_logger(), "Immagine non ottenuta");
-
-				return;
-			}			
+			}		
 		}
 		
 		
@@ -285,6 +295,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		  	camera_matrix(1, 1) = msg->k[4];
 		  	camera_matrix(0, 2) = msg->k[2];
 		  	camera_matrix(1, 2) = msg->k[5];
+		  	//RCLCPP_INFO(this->get_logger(), "Camer Calib");
 		}
 };
 
