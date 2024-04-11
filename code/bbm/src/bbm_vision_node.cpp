@@ -83,7 +83,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 			cv::Vec3d topRightCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2))+ t;
 			
 			
-			rot_t * cv::Mat(cv::Vec3d(-markerSize/2, -markerSize/2, 0));
+			v = rot_t * cv::Mat(cv::Vec3d(-markerSize/2, markerSize/2, 0));
 			cv::Vec3d topLeftCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2)) + t;
 			
 			// compute yaw angle between robot coordinate system and corners
