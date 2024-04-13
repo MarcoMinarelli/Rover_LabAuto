@@ -259,9 +259,9 @@ class BBM_Control_Node : public rclcpp::Node{
 			double roll, pitch, yaw;
 			m.getRPY(roll, pitch, yaw);
 			
-		    	pose[0] =  msg->pose.position.x;
-		    	pose[1] =  msg->pose.position.y;
-		    	pose[2] =  yaw;
+		    pose[0] =  msg->pose.position.x;
+		    pose[1] =  msg->pose.position.y;
+		    pose[2] =  yaw;
 		}
 		
 		/** Method that stores the parameters of the line towards which the robot has to converge **/

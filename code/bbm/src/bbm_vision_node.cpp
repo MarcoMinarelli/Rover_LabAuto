@@ -20,6 +20,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
 
 #include "bbm_interfaces/msg/lineparams.hpp"
 
@@ -70,29 +71,19 @@ class BBM_Vision_Node : public rclcpp::Node{
 		/** Method that compute upper marker corners' position, the slope of line that passes through both of them and, depending on the marker id, computes the slope of the new line. Returns a 
 			pair where the first element indicates if the line can be expressed as y = m*x + q or not. This is needed because vertical lines cannot be represented this way.
 		**/
-		std::pair<bool, double> getAngularCoefficient(int id, cv::Vec3d t, cv::Vec3d c){
+		std::pair<bool, double> getAngularCoefficient(int id, tf2::Transform transf/*, cv::Vec3d t, cv::Vec3d c*/){
 			std::pair<bool, double> ret;
-			cv::Mat cv_rot(3, 3, CV_64F);
-			cv::Rodrigues(c, cv_rot);
-			
-			cv::Mat rot_t = cv_rot.t();
-			
-			// Top right corner in ArUco coordinate frame: (size/2, size/2, 0) while top left is (-size/2, -size/2, 0). In order to get position in camera coordinate frame, 
-			// we compute R * point_ArUco_frame + t
-			cv::Mat v = rot_t * cv::Mat(cv::Vec3d(markerSize/2, markerSize/2, 0));
-			cv::Vec3d topRightCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2))+ t;
-			
-			
-			v = rot_t * cv::Mat(cv::Vec3d(-markerSize/2, markerSize/2, 0));
-			cv::Vec3d topLeftCorner = cv::Vec3d(v.at<double>(0,0), v.at<double>(0,1), v.at<double>(0,2)) + t;
+
+			tf2::Vector3 topRight_rosCoord = transf*tf2::Vector3(markerSize/2, markerSize/2, 0);
+			tf2::Vector3 topLeft_rosCoord = transf*tf2::Vector3(-markerSize/2, markerSize/2, 0);
 			
 			// compute yaw angle between robot coordinate system and corners
-			double angleRight = getAngle(topRightCorner, c);
-			double angleLeft = getAngle(topLeftCorner, c);
+			double angleRight = atan2(topRight_rosCoord.y(), topRight_rosCoord.x()); //getAngle(topRightCorner, c);
+			double angleLeft = atan2(topLeft_rosCoord.y(), topLeft_rosCoord.x()); //getAngle(topLeftCorner, c);
 			
 			// computing  2D distance between robot and corners
-			double rRight = sqrt(topRightCorner[0] * topRightCorner[0] + topRightCorner[1] * topRightCorner[1]);
-			double rLeft = sqrt(topLeftCorner[0] * topLeftCorner[0] + topLeftCorner[1] * topLeftCorner[1]);
+			double rRight = sqrt(topRight_rosCoord.x() * topRight_rosCoord.x() + topRight_rosCoord.y() * topRight_rosCoord.y());
+			double rLeft = sqrt(topLeft_rosCoord.x() * topLeft_rosCoord.x() + topLeft_rosCoord.y() * topLeft_rosCoord.y());
 			
 			// computing corners position in fixed frame
 			std::vector<double> leftPoint(pose[0] + rLeft*cos(pose[5] + angleLeft), pose[1] + rLeft*sin(pose[5] + angleLeft));
@@ -104,26 +95,26 @@ class BBM_Vision_Node : public rclcpp::Node{
 			double m;
 			bool ok;
 			if(id == 2){ //desired line forms 45° respect to ArUco
-				if(ret.first && ret.second != 1){ //if the line is not vertical and has slope !=1 
+				if(ret.first && ret.second != 1){ //if the ArUco segment is not vertical and has slope !=1 
 					m = ((ret.second + 1)/(1 - ret.second)); // m is the tangent of the line parallel to ArUco, we want it rotated by 45°, tan(45°) = 1, the we apply the sum of tangent formula
 					ok = true;
 				}else if(ret.first && ret.second == 1){ // if the line between corners is not vertical and is already at 45° => the resulting line is parallel to y axis
 					ok = false;
 					m = 0;
-				}else{ // the line between corners is vertical => the slope of desired line is 1
+				}else{ // the line between corners is vertical => the slope of desired line is -1 (90 + 45° = 135°)
 					ok = true;
-					m = 1;
+					m = -1;
 				}
-			}else if(id == 3){ // line that forms an angle of 135° wrt marker				
+			}else if(id == 3){ // ArUco segment forms an angle of 135° wrt marker				
 				if(ret.first && ret.second  != -1){ // line not vertical and marker has slope != -1 
 					ok = true;
 					m = (ret.second - 1)/(1 + ret.second); // same concept as case with id = 2
 				}else if(ret.first && ret.second  == -1){ // line not vertical, marker has slope -1 => resulting line parallel to y axis
 					ok = false;
 					m = 0;
-				}else{ // line vertical => desired line has slope -1
+				}else{ // line vertical => desired line has slope 1 (90°+ 135°)
 					ok = true;
-					m = -1;
+					m = 1;
 				}
 			}else if(id == 4){
 				ok = true;
@@ -134,17 +125,16 @@ class BBM_Vision_Node : public rclcpp::Node{
 		
 		
 		/** Method that given a translation and rotation compute the angle (on xy plane) of the object wrt robots' x axis **/
-		double getAngle(cv::Vec3d t, cv::Vec3d c){
-		
-			tf2::Transform img2aruco;
-			tf2::Transform aruco2img;
-			
-			double r, p, y;
+		tf2::Transform getTransform(cv::Vec3d t, cv::Vec3d c){
+			// From ros coordinate (x pointing forward, y pointing to the left, z pointing up) to image (x to right, y to down, z pointing forward)
+			tf2::Transform ros2img;
+					
 			tf2::Matrix3x3 basis;
-			basis = tf2::Matrix3x3(-1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0);
-			img2aruco.setBasis(basis);
-			aruco2img = img2aruco.inverse();
-  
+			basis = tf2::Matrix3x3(0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0);
+			ros2img.setBasis(basis);
+			double r, p, y;
+			
+  			// From OpenCV to Tf2 Transform. It represent the transformation between camera coordinates and ArUco marker coordinates
 			tf2::Vector3 tf2_origin(t[0], t[1], t[2]);
 			cv::Mat cv_rot(3, 3, CV_64F);
 			cv::Rodrigues(c, cv_rot);
@@ -154,12 +144,13 @@ class BBM_Vision_Node : public rclcpp::Node{
 			cv_rot.at<double>(2, 1), cv_rot.at<double>(2, 2));
 
 			tf2::Transform pose_aruco(tf2_rot, tf2_origin);
-				
-			tf2::Transform pose_img;
-			pose_img.mult(img2aruco, pose_aruco);
-			pose_img = pose_img.inverse();
-			pose_img.getBasis().getRPY(r, p, y); // get rpy angles
-			return y;		
+
+
+			// From ros to ArUco, multiplying the previous transforms				
+			tf2::Transform ros2aruco;
+			ros2aruco.mult(ros2img, pose_aruco);
+
+			return ros2aruco; 
 		}
 		
 		/** Method that given the transaltion of a lsit of markers returns the index of closest one **/
@@ -206,12 +197,12 @@ class BBM_Vision_Node : public rclcpp::Node{
 			m.getRPY(roll, pitch, yaw);
 		    	
 			pose[0] =  msg->pose.position.x;
-		    	pose[1] =  msg->pose.position.y;
-		    	pose[2] =  msg->pose.position.z;
+		    pose[1] =  msg->pose.position.y;
+		    pose[2] =  msg->pose.position.z;
 		    	
-		    	pose[3] =  roll;
-		    	pose[4] =  pitch;
-		    	pose[5] =  yaw;
+		    pose[3] =  roll;
+		    pose[4] =  pitch;
+		    pose[5] =  yaw;
 		}
 		
 		/** Method that elaborates left image: scans for ArUco markers, if found then compute the position of the marker, get the line angular coefficient (from the marker id) and finally 
@@ -248,16 +239,19 @@ class BBM_Vision_Node : public rclcpp::Node{
 					if(r < maxDist){ 
 						
 						double m, q;
-						double markerAngle = getAngle(tvecs[closestMarker], rvecs[closestMarker]);
+						//double markerAngle = getAngle(tvecs[closestMarker], rvecs[closestMarker]);
+						tf2::Transform ros2aruco = getTransform(tvecs[closestMarker], rvecs[closestMarker]);
+						tf2::Vector3 origin_rosCoord = ros2aruco*tf2::Vector3(0,0,0); //marker center in ros coordinates 
+						double markerAngle = atan2(origin_rosCoord.y(), origin_rosCoord.x());
 						
 						
 						// Line params computation
-						
 						double x_a = pose[0] + r*cos(pose[5] + markerAngle);
 						double y_a = pose[1] + r*sin(pose[5] + markerAngle);
 						
 
-						std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], tvecs[closestMarker], rvecs[closestMarker]);
+						std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], ros2aruco/*, tvecs[closestMarker], rvecs[closestMarker]*/);
+						
 						// if res.first == true, then the line can be represented as y = m*x +q
 						if(res.first){
 							m = res.second;
@@ -266,6 +260,8 @@ class BBM_Vision_Node : public rclcpp::Node{
 							m = 0;
 							q = 0;
 						}
+						
+						
 						// Lineparams message creation
 						bbm_interfaces::msg::Lineparams msg;
 						msg.x = x_a;

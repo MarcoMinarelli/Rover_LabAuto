@@ -43,10 +43,11 @@ Gli obiettivi del nodo visione sono:
   con $R$ matrice di rotazione e $ \boldsymbol{t}$ vettore che indica la traslazione tra la camera e il marker; calcolando questi due elementi si può ricavare la 
   posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi \cite{marchand2015pose}, i quali possono essere richiamati dalla 
   funzione \texttt{solve\_PnP()} della libreria. Nello specifico in \cite{infinitesimal} è proposto un metodo per risolvere il problema nel caso il target siano dei
-   marker. \\
+  marker. \\
+  La matrice di trasformazione dalla terna Robot alla terna camera è data da   $ T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $, mentre la matrice di trasformazione dalla terna camera alla terna marker da $ T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{matrix} & 1 \end{bmatrix} $
   A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
   In terna marker, il corner in alto a destra ha coordinate $(markerSize/2, markerSize/2, 0)^T$ mentre il corner in alto a sinistra $(-markerSize/2, markerSize/2, 0)^T$.
-  Si può quindi calcolare le coordinate di tali punti in terna camera calcolando $R \cdot P_{corner} + \boldsymbol{t}$; a questo punto è possibile ottenere le coordinate
+  Si può quindi calcolare le coordinate di tali punti in terna camera calcolando $T^R_C \cdot T^C_M \cdot P_{corner}$; a questo punto è possibile ottenere le coordinate
   dei corner in terna fissa. Da queste coordinate si può ricavare l'equazione della retta $r_{corner}: y = m_{corner} x + q_{corner}$ passante per i corner, sempre in 
   terna fissa. \\
   L'id del marker identifica la direzione desiderata cioé la rotazione desiderata di $r_{corner}$ attorno al punto $(x_A, y_A)$. A livello algoritmico, si considera
