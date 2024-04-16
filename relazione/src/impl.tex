@@ -44,9 +44,19 @@ Gli obiettivi del nodo visione sono:
   posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi \cite{marchand2015pose}, i quali possono essere richiamati dalla 
   funzione \texttt{solve\_PnP()} della libreria. Nello specifico in \cite{infinitesimal} è proposto un metodo per risolvere il problema nel caso il target siano dei
   marker. \\
-  La matrice di trasformazione dalla terna Robot alla terna camera è data da   $ T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $, mentre la matrice di trasformazione dalla terna camera alla terna marker da $ T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{matrix} & 1 \end{bmatrix} $
+  La matrice di trasformazione dalla terna Robot alla terna camera è data da\\   
+\begin{equation}
+T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} 
+\end{equation}\\ mentre la matrice di trasformazione dalla terna camera alla terna marker da 
+\begin{equation}
+T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{matrix} & 1 \end{bmatrix}
+\end{equation}
   A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
-  In terna marker, il corner in alto a destra ha coordinate $(markerSize/2, markerSize/2, 0)^T$ mentre il corner in alto a sinistra $(-markerSize/2, markerSize/2, 0)^T$.
+  In terna marker i corner, a destra e a sinistra, hanno rispettivamente coordinate
+  \[
+     {\boldsymbol{x_r}}=\begin{pmatrix} \frac{Markersize}{2} \\ \frac{Markersize}{2} \\ 0 \end{pmatrix} \ \ \ \;
+     {\boldsymbol{x_l}}=\begin{pmatrix} -\frac{Markersize}{2} \\ \frac{Markersize}{2} \\ 0 \end{pmatrix}
+  \]
   Si può quindi calcolare le coordinate di tali punti in terna camera calcolando $T^R_C \cdot T^C_M \cdot P_{corner}$; a questo punto è possibile ottenere le coordinate
   dei corner in terna fissa. Da queste coordinate si può ricavare l'equazione della retta $r_{corner}: y = m_{corner} x + q_{corner}$ passante per i corner, sempre in 
   terna fissa. \\
@@ -225,3 +235,4 @@ Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un
 \Rightarrow \ \ \ \theta(t+1)=\theta(t)+\omega(t)\Delta{T}
 \end{equation}  
 in tale modo riusciamo a pilotare il rover.
+\subsubsection{Filtro complementare}
