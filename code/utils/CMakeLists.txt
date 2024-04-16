@@ -38,9 +38,9 @@ target_include_directories(failsafe PUBLIC
   
 
 #Converter node part
-add_executable( converter src/converter.cpp src/PID.cpp) 
+add_executable( converter src/converter.cpp src/PID.cpp src/complementaryFilter.cpp) 
 
-ament_target_dependencies(converter rclcpp std_msgs geometry_msgs dart_interfaces)
+ament_target_dependencies(converter rclcpp std_msgs geometry_msgs sensor_msgs dart_interfaces)
 
 install(TARGETS converter
   DESTINATION lib/${PROJECT_NAME})
