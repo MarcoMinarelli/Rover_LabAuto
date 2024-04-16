@@ -35,7 +35,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub;
 		
 		//sensor feedback
-		std::vector<double> pose; //pose=[x_r, y_r, theta_r] 
+		std::vector<double> pose; //pose=[x_r, y_r] 
 		std::vector<float> laser;
 		
 		// parameters
@@ -53,6 +53,8 @@ class BBM_Control_Node : public rclcpp::Node{
 		double d1, d2, d3; //systems' disturbance
 		double v_min, v_max, omega_max; //velocity limits
 		
+		bool ok = false;
+		
 		
 		/** Method that compute the distance between two points **/
 		double distance (std::vector<double> x1, std::vector<double> x2){
@@ -63,6 +65,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		/** Method that returns the intersection between convergence line and a circle with radius r centered in robot position. From [2]**/ 
 		std::vector<double> intersection(){
 			std::vector<double> ret(2,0);
+			std::vector<double> x_aruco = {x_a, y_a};
 			if (vert==false){ // if the line is not vertical, i.e it can be represented as y=mx+q 
 				double b=-2*pose[0]+2*m*q-2*m*pose[1];
 				double a=1+pow(m,2);
@@ -76,8 +79,8 @@ class BBM_Control_Node : public rclcpp::Node{
 					
 					std::vector<double> c1(x1, m*x1+q);
 					std::vector<double> c2(x2, m*x2+q);
-					if(distance(pose,std::vector<double>(x_a, y_a))>r)
-						xd=(distance(c1, std::vector<double>(x_a, y_a))>distance(c2, std::vector<double>(x_a, y_a)))?x1:x2;
+					if(distance(pose,x_aruco)>r)
+						xd=(distance(c1, x_aruco)>distance(c2, x_aruco))?x1:x2;
 					else{
 					
 						double m1=c1[1]/c1[0];
@@ -108,16 +111,19 @@ class BBM_Control_Node : public rclcpp::Node{
 				double c=pow(pose[0],2)+pow(x_a,2)-2*pose[0]*x_a+pow(pose[1],2)-pow(r,2);
 				double delta=pow(b,2)-4*c;
 				double yd=0;
+
 				if(delta>0){
 				
 					double y1=(-b+sqrt(delta))/(2);
 					double y2=(-b-sqrt(delta))/(2);
 					
-					std::vector<double> c1(x_a, y1);
-					std::vector<double> c2(x_a, y2);
+					std::vector<double> c1 = {x_a, y1};
+					std::vector<double> c2 = {x_a, y2};
 					
-					if(distance(pose,std::vector<double>(x_a, y_a))>r)
-						yd=(distance(c1, std::vector<double>(x_a, y_a))>distance(c2, std::vector<double>(x_a, y_a))) ? y1:y2;	
+
+					
+					if(distance(pose, x_aruco)>r)
+						yd=(distance(c1, x_aruco )>distance(c2, x_aruco)) ? y1:y2;	
 					else{
 					
 						double m1=c1[1]/c1[0];
@@ -132,6 +138,8 @@ class BBM_Control_Node : public rclcpp::Node{
 				}else{
 					yd=pose[1];
 				}
+				
+				//RCLCPP_INFO(this->get_logger(), "result (%f, %f)", x_a, yd);
 				ret[0]=x_a;
 				ret[1]=yd;
 			}
@@ -207,7 +215,7 @@ class BBM_Control_Node : public rclcpp::Node{
 
 	
 	public:
-		BBM_Control_Node() : Node("bbm_control_node"), pose(3,0), laser (360,0){
+		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360,0){
 			
 			r=5;
 			k_a=5;
@@ -218,8 +226,8 @@ class BBM_Control_Node : public rclcpp::Node{
 			delta1=0.5; // delta1 in (0, 1)
 			delta2=2; // delta2 > 0
 			d1=0.1;
-			d2=0.1;
-			d3=0.1;
+			d2=0.01;
+			d3=0.001;
 			v_min=2; //[m/s]
 			v_max=7;
 			omega_max=1;
@@ -230,9 +238,6 @@ class BBM_Control_Node : public rclcpp::Node{
 			vert=true;
 			dx=true;
 			end=false;
-			
-			
-			
 			
 			
 			rho2 = computeRho2();
@@ -261,7 +266,9 @@ class BBM_Control_Node : public rclcpp::Node{
 			
 		    pose[0] =  msg->pose.position.x;
 		    pose[1] =  msg->pose.position.y;
-		    pose[2] =  yaw;
+		  
+		    
+		    ok = true;
 		}
 		
 		/** Method that stores the parameters of the line towards which the robot has to converge **/
@@ -317,27 +324,28 @@ class BBM_Control_Node : public rclcpp::Node{
 				vel_pub -> publish(msg);	
 					
 			} else{
-			
-				std::vector<double> goal=intersection();
-				std::vector<double> f_attr=computeAttractiveForce(goal);
-				std::vector<double> f_rep= computeRepulsiveForce();
-				std::vector<double> f_tot= sum(f_attr,f_rep);
-				
-				
-				double v_d = f_tot[0]* cos(pose[2])+ f_tot[1]* sin(pose[2]);
-				double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-pose[2]);
-				
-				//SMC
-				double u1=-rho1*sign(goal[0]-pose[0]);
-				double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
-				
-				double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
-				double omega=omega_d-u2;
-				
-				geometry_msgs::msg::Twist msg;
-				msg.linear.x=v;
-				msg.angular.z=omega;
-				vel_pub -> publish(msg);
+				if(ok){
+					std::vector<double> goal=intersection();
+					std::vector<double> f_attr=computeAttractiveForce(goal);
+					std::vector<double> f_rep= computeRepulsiveForce();
+					std::vector<double> f_tot= sum(f_attr,f_rep);
+					
+					
+					double v_d = f_tot[0]* cos(pose[2])+ f_tot[1]* sin(pose[2]);
+					double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-pose[2]);
+					
+					//SMC
+					double u1=-rho1*sign(goal[0]-pose[0]);
+					double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
+					
+					double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
+					double omega=omega_d-u2;
+					
+					geometry_msgs::msg::Twist msg;
+					msg.linear.x=v;
+					msg.angular.z=omega;
+					vel_pub -> publish(msg);
+				}
 			}
 		}
 };
