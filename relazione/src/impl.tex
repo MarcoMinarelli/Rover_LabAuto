@@ -44,7 +44,7 @@ Gli obiettivi del nodo visione sono:
   posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi \cite{marchand2015pose}, i quali possono essere richiamati dalla 
   funzione \texttt{solve\_PnP()} della libreria. Nello specifico in \cite{infinitesimal} è proposto un metodo per risolvere il problema nel caso il target siano dei
   marker. \\
-  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{in realtà, la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $ ma dato che la camera è stata ruotata di $180^{\circ}$ si ottiene la matrice sopra }   
+  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{In realtà la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $. Ma, dato che la camera è ruotata di $180^{\circ}$ si ottiene la matrice sopra riportata. }   
 \begin{equation}
 T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} 
 \end{equation}\\ mentre la matrice di trasformazione dalla terna camera alla terna marker da 
