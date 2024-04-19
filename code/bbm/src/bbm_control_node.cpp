@@ -215,7 +215,7 @@ class BBM_Control_Node : public rclcpp::Node{
 
 	
 	public:
-		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360,0){
+		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360, 16.0){
 			
 			r=5;
 			k_a=5;
