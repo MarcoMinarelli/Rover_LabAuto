@@ -67,28 +67,30 @@ class VelocityTest:public rclcpp::Node{
 		
 		rclcpp::Publisher<dart_interfaces::msg::Commands>::SharedPtr commands_pub;
 	public: 
-    VelocityTest : Node("tv"), cf(4.74,62.6,10){
-      rclcpp::QoS custom_qos(10);
+    		VelocityTest : Node("tv"), cf(4.74,62.6,10){
+			rclcpp::QoS custom_qos(10);
 			
 			auto sub_opt = rclcpp::SubscriptionOptions();
 
-            estVel_acc=0;
-            estVel_pos=0;
-            old_yaw=0;
+           		estVel_acc=0;
+            		estVel_pos=0;
+            		old_yaw=0;
 		
         		twistSub = create_subscription<geometry_msgs::msg::Twist>( "/cmd_vel", custom_qos, std::bind(&Converter::twistCallback, this, std::placeholders::_1), sub_opt);
 
          		imuSub = create_subscription<sensor_msgs::msg::Imu>( "/zed/zed_node/imu/data", custom_qos, std::bind(&Converter::imuCallback, this, std::placeholders::_1), sub_opt);
 
-			      timer = this->create_wall_timer(10ms, std::bind(&Converter::timerCallback, this));
+			timer = this->create_wall_timer(10ms, std::bind(&Converter::timerCallback, this));
 
-            poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&Converter::poseCallback, this, std::placeholders::_1), sub_opt);
+           		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&Converter::poseCallback, this, std::placeholders::_1), sub_opt);
 
         		commands_pub = this->create_publisher<dart_interfaces::msg::Commands>("dart/commands", 10);
 
       			RCLCPP_INFO(this->get_logger(), "Test velocity node started");
 
-    }
+		}
+
+    
 
 void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
 			estVel_acc += msg->linear_acceleration.x * deltaT;
