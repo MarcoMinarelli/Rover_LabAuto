@@ -99,7 +99,6 @@ Poiché il punto LOS, con il suo potenziale associato, giace sempre su Dk, quest
 Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algoritmo.
 \begin{figure} [H]
     \centering
-    %\includegraphics[width=0.5\linewidth]{img/LOSAPFDisegno.png}
     \includesvg[width=0.5\linewidth]{img/LOSAPFDisegno}
     \caption{Tecnica di intersezione}
     \label{fig:LOS}
@@ -177,12 +176,21 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
 Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
 Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare cosi da uscire dalla saturazione. Questo può richiedete tempi lunghi con una conseguente perdita di reattività. \\
 Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
- \begin{figure}[h]
-      \centering
-      \includegraphics[width=0.8\textwidth]{img/anti wind-up.JPG}
-      \caption{schema PID con back calculation and tracking}
-      \label{img:antiwindup}
-    \end{figure}
+ %\begin{figure}[h]
+ %     \centering
+ %     \includegraphics[width=0.8\textwidth]{img/anti wind-up.JPG}
+ %     \caption{schema PID con back calculation and tracking}
+ %     \label{img:antiwindup}
+ %   \end{figure}
+    
+    
+    \begin{figure} [H]
+    \centering
+    \fontsize{8}{10}\selectfont
+    \includesvg[width=\linewidth]{img/PIDAntiWindup}
+    \caption{schema PID con back calculation and tracking}
+    \label{img:antiwindup}
+\end{figure}
 In questa tesnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
 \begin{equation}
 U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s)}_\text{BC\&T}
