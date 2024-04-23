@@ -205,7 +205,6 @@ e si sceglie $r_1<\rho_1<r_2$,\ \ $r_3<\rho_2$. Con tale scelta la dinamica dell
 con $C=\frac{d_3(\rho_1+v_{max}\sqrt{1-\delta_1^{2}})}{v_{min}}$.
 \begin{figure} [H]
     \centering
-    %\includegraphics[width=0.5\linewidth]{img/SMC.svg}
     \includesvg[width=0.5\linewidth]{img/SMC}
     \caption{Sliding Mode Control}
     \label{fig:SMC}
@@ -228,11 +227,19 @@ con $C=\frac{d_3(\rho_1+v_{max}\sqrt{1-\delta_1^{2}})}{v_{min}}$.
 
 \subsection{Nodo convertitore}
 Tale nodo è stato implementetato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
-Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover.\\ Per passare dalla velocità angolare all'accelerazione usiamo invece la derivta discreta
-
+Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i gudagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\ La converisone velocità angolare $\rightarrow$ accelerazione è stata implementata tramite l'uso della derivta discreta
 \begin{equation}
 \omega(t+1)=\frac{\theta(t)-\theta(t-1)}{\Delta{T}} \ \ \
-\Rightarrow \ \ \ \theta(t+1)=\theta(t)+\omega(t)\Delta{T}
-\end{equation}  
-in tale modo riusciamo a pilotare il rover.
+\Rightarrow \ \ \ \theta(t+1)=\theta(t)+\omega(t)\Delta{T}.
+\end{equation} 
+
 \subsubsection{Filtro complementare}
+Per ottenre un segnale di velocità longitudinale del rover è stato implementato un filtro complementare \cite{Filtrocompelmentare}. Questo sfrutta i dati della posizione stimata del rover e dal'accellerometro della ZED filtrandoli tramite l'utilizzo di un filtro passa basso e di un filtro passa alto. Più precisamente l'idea è quella di derivare i dati della posizione del rover, forniti dal giroscopio, per ottenere una stima della velocità che viene poi mandata al filtro passa basso. Mentre per quanto riguarda i dati dell'accelerometro, questi vengono integrati per ottenere sempre una stima della velocità che viene poi filtrata tramite filtro passa alto.
+L'uscita è data dalla somma dei due segnali ottenuti dai filtri.
+Provenendo da sensori diversi, le misurazioni della velocità di entrambi i rami presentano diverse perturbazioni del rumore. Pertanto, entrambe le parti del PID agiscono su stime di velocità non ottimali e il comportamento del controllo, sebbene dimostrato valido, ha margine per essere migliorato.
+\begin{figure} [H]
+    \centering
+    \includesvg[width=0.5\linewidth]{img/Filtro complementare}
+    \caption{Filtro complementare}
+    \label{fig:Filtro complementare}
+\end{figure}
