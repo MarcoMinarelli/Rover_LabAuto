@@ -188,7 +188,7 @@ le superfici di sliding sono
 \begin{equation}
        \sigma_1=e_1 \ \ \ \ \ \ \ \ \sigma_2=e_3-\arcsin(f(e_2))
 \end{equation} 
-dove $f(e_2)=-\min({\delta_1|e_2|^{-1},\ \delta_2})$ con $\delta_1 \in (0,1)$, $\delta_2>0$.\\ Per ottenere i guadagni $\rho_1$ e $\rho_2$ si calcolano i paramtri  $r_1$, $r_2$ e $r_3$ in tale modo
+dove $f(e_2)=-\min({\delta_1|e_2|^{-1},\ \delta_2})$ con $\delta_1 \in (0,1)$, $\delta_2>0$.\\ Per ottenere i guadagni $\rho_1$ e $\rho_2$ si calcolano i parametri  $r_1$, $r_2$ e $r_3$ in tale modo
 \begin{equation}
         r_1= \max\left\{\frac{\delta_1+d_1-d_3)\sqrt{1-\delta_1^{2}}}{1+d_3-d_1}v_{max}, \frac{(1+d_2)(\omega_{max}+\rho_2) \frac{\rho_1}{\rho_2}+d_2v_{max}}{1-d_1}\right\}
 \end{equation}
@@ -211,30 +211,16 @@ con $C=\frac{d_3(\rho_1+v_{max}\sqrt{1-\delta_1^{2}})}{v_{min}}$.
 \end{figure}
 
 
-\begin{table} [H]
-    \centering
-    \begin{tabular}{|c|c|c|c|}
-    \hline
-        Misurazione & Distanza ruota destra (cm) & Distanza ruota sinistra (cm) & Angolo (°) \\  \hline
-        1 & 22 & 21.5& 6.200 \\  \hline
-        2 & 14& 15& 4.145  \\  \hline
-        3 & 13.5&15&  4.075 \\  \hline
-        4 & 14.5&15&  4.218 \\  \hline
-        5 & 15.5& 17& 4.640 \\  \hline
-        6 & 15&16.5& 4.500  \\  \hline
-    \end{tabular}
-\end{table}
-
 \subsection{Nodo convertitore}
 Tale nodo è stato implementetato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
-Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i gudagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\ La converisone velocità angolare $\rightarrow$ accelerazione è stata implementata tramite l'uso della derivta discreta
+Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i gudagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\ La conversione velocità angolare $\rightarrow$ accelerazione è stata implementata tramite l'uso della derivta discreta
 \begin{equation}
 \omega(t+1)=\frac{\theta(t)-\theta(t-1)}{\Delta{T}} \ \ \
 \Rightarrow \ \ \ \theta(t+1)=\theta(t)+\omega(t)\Delta{T}.
 \end{equation} 
 
 \subsubsection{Filtro complementare}
-Per ottenre un segnale di velocità longitudinale del rover è stato implementato un filtro complementare \cite{Filtrocompelmentare}. Questo sfrutta i dati della posizione stimata del rover e dal'accellerometro della ZED filtrandoli tramite l'utilizzo di un filtro passa basso e di un filtro passa alto. Più precisamente l'idea è quella di derivare i dati della posizione del rover per ottenere una stima della velocità che viene poi mandata al filtro passa basso, mentre per quanto riguarda i dati dell'accelerometro questi vengono integrati per ottenere sempre una stima della velocità che viene poi filtrata tramite filtro passa alto.
+Per ottenere un segnale di velocità longitudinale del rover è stato implementato un filtro complementare \cite{Filtrocompelmentare}. Questo sfrutta i dati della posizione stimata del rover e dal'accellerometro della ZED filtrandoli tramite l'utilizzo di un filtro passa basso e di un filtro passa alto. Più precisamente l'idea è quella di derivare i dati della posizione del rover per ottenere una stima della velocità che viene poi mandata al filtro passa basso, mentre per quanto riguarda i dati dell'accelerometro questi vengono integrati per ottenere sempre una stima della velocità che viene poi filtrata tramite filtro passa alto.
 L'uscita è data dalla somma dei due segnali ottenuti dai filtri.
 Provenendo da sensori diversi, le misurazioni della velocità di entrambi i rami presentano diverse perturbazioni del rumore. Pertanto, entrambe le parti del PID agiscono su stime di velocità non ottimali e il comportamento del controllo, sebbene dimostrato valido, ha margine per essere migliorato.
 \begin{figure} [H]

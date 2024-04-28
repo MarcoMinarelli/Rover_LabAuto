@@ -90,12 +90,12 @@ Per il campo repulsivo dell'ostacolo $i$-esimo, invece è stato scelto
 con $ \gamma = 2$, $ \boldsymbol{q_{obs_i}} $ la rappresentazione dell'ostacolo nello spazio delle configurazioni, con $ d( \boldsymbol{q},  \boldsymbol{q_{obs_i}}) $ la
 distanza tra il robot e l'ostacolo e infine con $ \delta_0 $ la soglia sopra la quale l'ostacolo non esercita nessuna influenza sul robot.
 Uno dei vantaggi dell'algoritmo APF è che può essere impiegato per effettuare planning online, quindi senza conoscenza a priori della mappa e delle posizioni (o della 
-forma) degli ostacoli. Inoltre, grazie alla soglia sulla distanza degli ostacoli presente nel potenziale repulsivo, è possibile associare un potrenziale ad ogni oggetto rilevato entro tale distanza invece che cercare di ricostruirne la forma.
+forma) degli ostacoli. Inoltre, grazie alla soglia sulla distanza degli ostacoli presente nel potenziale repulsivo, è possibile associare un potenziale ad ogni oggetto rilevato entro tale distanza invece che cercare di ricostruirne la forma.
 
 \subsubsection{LOS APF}
  Al fine di vincolare il veicolo a rimanere in una regione limitata di banda attorno al percorso diretto tra due punti di passaggio consecutivi, il metodo precedente viene quindi modificato utilizzando un approccio di Line Of Sight(LOS) \cite{LOSAPF}. In questo caso il potenziale attrattivo non è più associato al waypoint attuale ma ad un punto LOS.
-Il calcolo del punto LOS si basa sull'intersezione tra il cerchio di raggio r, centrato sulla posizione del rover e la linea Dk, dove Dk è la linea retta che unisce le coordinate precedente e quelle attuali. Se esistono due punti di intersezione, il punto LOS viene scelto come soluzione più vicina al punto di passaggio corrente. Se non c'è soluzione (cioè il rover si trova a una distanza maggiore di r dalla linea retta tra il punto di passaggio precedente e quello attuale), il punto LOS viene scelto come proiezione ortogonale della posizione della barca sulla linea.
-Poiché il punto LOS, con il suo potenziale associato, giace sempre su Dk, questo potenziale in movimento attirerà il rover verso la linea retta tra i due punti di passaggio e costringerà il veicolo a rimanere in una fascia limitata di larghezza inferiore o uguale a r. 
+Il calcolo del punto LOS si basa sull'intersezione tra il cerchio di raggio $r$, centrato sulla posizione del rover e la linea $D_k$, dove $D_k$ è la linea retta che unisce le coordinate precedente e quelle attuali. Se esistono due punti di intersezione, il punto LOS viene scelto come soluzione più vicina al punto di passaggio corrente. Se non c'è soluzione (cioè il rover si trova a una distanza maggiore di $r$ dalla linea retta tra il punto di passaggio precedente e quello attuale), il punto LOS viene scelto come proiezione ortogonale della posizione della barca sulla linea.
+Poiché il punto LOS, con il suo potenziale associato, giace sempre su $D_k$, questo potenziale in movimento attirerà il rover verso la linea retta tra i due punti di passaggio e costringerà il veicolo a rimanere in una fascia limitata di larghezza inferiore o uguale a $r$. 
 Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algoritmo.
 \begin{figure} [H]
     \centering
@@ -123,10 +123,10 @@ con $\beta$ >1.
 \\
 Nell'SMC per raggiungere l'obiettivo viene definita una Sliding Surface (SS) definita nello spazio di stato, la quale ha la proprietà di far tendere la dinamica dell'errore a zero. \\ Il sistema di controllo genera l'input di controllo $u$ in modo che:
 \begin{itemize}
-    \item se il sistema non è sull'SS ci viene portato in un tempo finito;
-    \item una volta che il sistema è sull'SS ce lo tiene nonostante le incertezze sul modello.
+    \item se il sistema non è sulla SS ci viene portato in un tempo finito;
+    \item una volta che il sistema è sulla SS ce lo tiene nonostante le incertezze sul modello.
 \end{itemize}
-Esistono varie tipologie di SS, dalla letteratura definiamo per esempio $S(t)=s=0$, con s variabile di sliding. La variabile di sliding è una combinazione lineare degli stati errore del sistema ed è definita come:
+Esistono varie tipologie di SS, dalla letteratura definiamo per esempio $S(t)=s=0$, con $s$x variabile di sliding. La variabile di sliding è una combinazione lineare degli stati errore del sistema ed è definita come:
 \begin{equation}
 s:=(\frac{d}{dt}+\lambda)^{n-1}\Tilde{\boldsymbol {x}}
 \end{equation}
@@ -144,7 +144,7 @@ u_{disc}=-\frac{K}{\hat{b}}sgn(s)
 \end{equation}
 dobbiamo ricavare K in modo che soddisfi la condizione di sliding.
 \\
-Nel caso in cui il modello sia incerto sia su f che su b si definisce k come:
+Nel caso in cui il modello sia incerto sia su $f$ che su $b$ si definisce $K$ come:
 \begin{equation}
 K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
 \end{equation}
@@ -174,24 +174,16 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
 
 \subsubsection{Schemi anti wind-up}
 Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
-Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare cosi da uscire dalla saturazione. Questo può richiedete tempi lunghi con una conseguente perdita di reattività. \\
+Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare così da uscire dalla saturazione. Questo può richiedere tempi lunghi con una conseguente perdita di reattività. \\
 Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
- %\begin{figure}[h]
- %     \centering
- %     \includegraphics[width=0.8\textwidth]{img/anti wind-up.JPG}
- %     \caption{schema PID con back calculation and tracking}
- %     \label{img:antiwindup}
- %   \end{figure}
-    
-    
     \begin{figure} [H]
     \centering
     \fontsize{8}{10}\selectfont
     \includesvg[width=\linewidth]{img/PIDAntiWindup}
-    \caption{schema PID con back calculation and tracking}
+    \caption{Schema PID con back calculation and tracking}
     \label{img:antiwindup}
 \end{figure}
-In questa tesnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
+In questa tecnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
 \begin{equation}
 U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s)}_\text{BC\&T}
 \end{equation}
