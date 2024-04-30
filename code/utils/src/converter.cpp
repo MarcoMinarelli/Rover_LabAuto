@@ -1,7 +1,7 @@
 // Standard library includes
 #include <vector>
 #include"PID.cpp"
-#include "complementaryFilter.cpp"
+#include "complementaryfilter.cpp"
 
 //ROS includes
 #include <rclcpp/rclcpp.hpp>
@@ -40,6 +40,7 @@ class Converter : public rclcpp::Node{
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
 		double deltaT = 10; //ms
+		double acc_bias = 0.09;
 		
 		bool ok; 
 		rclcpp::TimerBase::SharedPtr timer;
@@ -55,7 +56,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p(1,1,1,10,1,7), cf(4.74,62.6, 10), pose(2, 0) {
+		Converter() : Node("converter"), p(1,1,1,10,1,7), cf(0.98), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -89,7 +90,7 @@ class Converter : public rclcpp::Node{
 	
 	
 		void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
-			estVel_acc += msg->linear_acceleration.x * deltaT;
+			estVel_acc += msg->linear_acceleration.x * deltaT - acc_bias;
 		}
 	
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/

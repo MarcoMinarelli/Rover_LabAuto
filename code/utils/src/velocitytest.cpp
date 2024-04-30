@@ -1,7 +1,7 @@
 // Standard library includes
 #include <vector>
 #include"PID.cpp"
-#include "complementaryFilter.cpp"
+#include "complementaryfilter.cpp"
 
 //ROS includes
 #include <rclcpp/rclcpp.hpp>
@@ -18,56 +18,35 @@
 //DART includes
 #include "dart_interfaces/msg/commands.hpp"
 
-
-#include <string>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-
-class WriteCSV {
-
-public:
-	std::string fileName;
-	std::ofstream csv_file;
-
-	WriteCSV(std::string filename) : fileName(filename) { this->csv_file.open(this->fileName); }
-
-
-	void writeData(std::vector<double> list) {
-		for (int i = 0; i < list.size()-1; ++i) {
-        		this->csv_file << std::setprecision(11) << list[i]<<",";
-		};
-		this->csv_file << std::setprecision(11) << list[list.size()]<<"\n";
-	}
-
-	void close_csv() { this->csv_file.close(); }
-};	
+//custom include
+#include "writecsv.cpp"
 
 
 
 using namespace std::chrono_literals;
+
+
 class VelocityTest:public rclcpp::Node{
-  private:
-
-    WriteCSV file_vel{"vel.csv"};
-
-		PID p;
+	private:
+		WriteCSV file_vel{"vel.csv"};
 		ComplementaryFilter cf;
-    double estVel_acc;// estimated linear velocity along x axis
+    		double estVel_acc;// estimated linear velocity along x axis
 		double estVel_pos;
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
-		double deltaT = 10; //ms 
+		double deltaT = 0.01; //s 
+		double inputVel = 0.6;
 
-    rclcpp::TimerBase::SharedPtr timer;
+		int count = 0;
+    		rclcpp::TimerBase::SharedPtr timer;
 		
-		rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twistSub;
+		rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr poseSub;
 	
 		rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imuSub;
 		
 		rclcpp::Publisher<dart_interfaces::msg::Commands>::SharedPtr commands_pub;
 	public: 
-    		VelocityTest : Node("tv"), cf(4.74,62.6,10){
+    		VelocityTest() : Node("tv"), cf(0.9), pose(2, 0){
 			rclcpp::QoS custom_qos(10);
 			
 			auto sub_opt = rclcpp::SubscriptionOptions();
@@ -76,13 +55,12 @@ class VelocityTest:public rclcpp::Node{
             		estVel_pos=0;
             		old_yaw=0;
 		
-        		twistSub = create_subscription<geometry_msgs::msg::Twist>( "/cmd_vel", custom_qos, std::bind(&Converter::twistCallback, this, std::placeholders::_1), sub_opt);
 
-         		imuSub = create_subscription<sensor_msgs::msg::Imu>( "/zed/zed_node/imu/data", custom_qos, std::bind(&Converter::imuCallback, this, std::placeholders::_1), sub_opt);
+         		imuSub = create_subscription<sensor_msgs::msg::Imu>( "/zed/zed_node/imu/data", custom_qos, std::bind(&VelocityTest::imuCallback, this, std::placeholders::_1), sub_opt);
 
-			timer = this->create_wall_timer(10ms, std::bind(&Converter::timerCallback, this));
+			timer = this->create_wall_timer(10ms, std::bind(&VelocityTest::timerCallback, this));
 
-           		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&Converter::poseCallback, this, std::placeholders::_1), sub_opt);
+           		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&VelocityTest::poseCallback, this, std::placeholders::_1), sub_opt);
 
         		commands_pub = this->create_publisher<dart_interfaces::msg::Commands>("dart/commands", 10);
 
@@ -93,20 +71,30 @@ class VelocityTest:public rclcpp::Node{
     
 
 void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
-			estVel_acc += msg->linear_acceleration.x * deltaT;
-		}
-void timerCallback(){
-      double estvel=cf.update(estVel_pos,estVel_acc);
-      std::vector<double> v(1,0);
-      v[0] = estvel;
-      file_vel.writeData (v);
-    //RCLCPP_INFO(this->get_logger(), "Throttle calcolato", throttle);
-				auto msg = new dart_interfaces::msg::Commands();
-			 	msg->header.stamp  = now();
-			 	msg->steering.data = 0;
-			 	msg->throttle.data = 50; //Or 0.5?
-			 	commands_pub->publish(*msg);
+	estVel_acc += msg->linear_acceleration.x * deltaT;
 }
+
+
+void timerCallback(){
+	if(count < 200){
+		double estvel=cf.update(estVel_pos,estVel_acc);
+	      	std::vector<double> v(2,0);
+	     	v[0] = inputVel;
+	     	v[1] = estvel;
+	      	file_vel.writeData (v);
+	    	RCLCPP_INFO(this->get_logger(), "acc %f pos %f est %f", estVel_acc, estVel_pos, estvel);
+		count++;	
+	}else{
+		inputVel = 0;
+	}
+	auto msg = new dart_interfaces::msg::Commands();
+	msg->header.stamp  = now();
+	msg->steering.data = 0;
+	msg->throttle.data = inputVel; //Or 0.5?
+	commands_pub->publish(*msg);
+	
+}
+
 void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
 			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
 
@@ -130,3 +118,11 @@ void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
 		}
 
 };
+
+
+int main(int argc, char **argv) {
+	rclcpp::init(argc, argv);
+	rclcpp::spin(std::make_shared<VelocityTest>());
+    	rclcpp::shutdown();
+    	return 0;
+}

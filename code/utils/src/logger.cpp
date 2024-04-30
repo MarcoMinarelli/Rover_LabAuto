@@ -1,39 +1,14 @@
-
 // standard library includes 
 #include <vector>
 
+//ROS includes
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/qos.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 //custom include
 #include "bbm_interfaces/msg/lineparams.hpp"
-
-
-	
-#include <string>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-
-class WriteCSV {
-
-public:
-	std::string fileName;
-	std::ofstream csv_file;
-
-	WriteCSV(std::string filename) : fileName(filename) { this->csv_file.open(this->fileName); }
-
-
-	void writeData(std::vector<double> list) {
-		for (int i = 0; i < list.size()-1; ++i) {
-        		this->csv_file << std::setprecision(11) << list[i]<<",";
-		};
-		this->csv_file << std::setprecision(11) << list[list.size()]<<"\n";
-	}
-
-	void close_csv() { this->csv_file.close(); }
-};	
+#include "writecsv.cpp"
 	
 		
 class Logger : public rclcpp::Node{
