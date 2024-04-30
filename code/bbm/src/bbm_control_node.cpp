@@ -42,16 +42,20 @@ class BBM_Control_Node : public rclcpp::Node{
 		float m, q, x_a, y_a; // line params
 		bool vert, dx, end;
 
+		// APF parameters
 		double r; // [m]
+		double k_r; // repulsive gain
 		double k_a; // attractive gain
 		double d_inf; // [m]
-		double k_r; // repulsive gain
-		double delta; // threshold between quadratic potential and distance potential
+		double delta; // threshold between quadratic potential and distance potential [m]
 		double k_theta; // omega gain 
+		
+		//SMC control parameters
 		double rho1, rho2; //SMC gains
 		double delta1, delta2; // SMC f(e2) params
 		double d1, d2, d3; //systems' disturbance
-		double v_min, v_max, omega_max; //velocity limits
+		double v_min, v_max; //linear velocity limits, in [m/s] 
+		double omega_max; //angular velocity limits inn [deg/s]
 		
 		bool ok = false;
 		
@@ -217,10 +221,10 @@ class BBM_Control_Node : public rclcpp::Node{
 	public:
 		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360, 16.0){
 			
-			r=5;
+			r=0.5;
 			k_a=5;
 			k_r=3;
-			d_inf=2;
+			d_inf=1;
 			delta=3;
 			k_theta=2;
 			delta1=0.5; // delta1 in (0, 1)
@@ -228,11 +232,11 @@ class BBM_Control_Node : public rclcpp::Node{
 			d1=0.1;
 			d2=0.01;
 			d3=0.001;
-			v_min=2; //[m/s]
-			v_max=7;
-			omega_max=1;
+			v_min=0;
+			v_max=0.8;
+			omega_max=28;
 			
-			// initial params
+			// initial line params
 			x_a=0; 
 			y_a=-6; 
 			vert=true;

@@ -21,7 +21,7 @@
 using namespace std::chrono_literals;
 
 
-/**	Node that gets desired angular and linear velocities, computes right values for steering angle and throttle, then sends them to the robot
+/**	Node that gets desired angular and linear velocities, computes right values for steering angle and throttle, then sends them to DART interface
 
 **/
 class Converter : public rclcpp::Node{
@@ -39,7 +39,7 @@ class Converter : public rclcpp::Node{
 		double estVel_pos;
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
-		double deltaT = 10; //ms
+		double deltaT = 0.01; //s
 		double acc_bias = 0.09;
 		
 		bool ok; 
@@ -56,7 +56,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p(1,1,1,10,1,7), cf(0.98), pose(2, 0) {
+		Converter() : Node("converter"), p(1,1,1,10,1,7), cf(0.985), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -88,9 +88,9 @@ class Converter : public rclcpp::Node{
 		}
 		
 	
-	
+		/** Callback for Imu message. Removes accelerometer bias, then computes instant velocity and adds it to the computed speed (estimated from accelerometer) **/
 		void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
-			estVel_acc += msg->linear_acceleration.x * deltaT - acc_bias;
+			estVel_acc += (msg->linear_acceleration.x - acc_bias) * deltaT ;
 		}
 	
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
@@ -113,6 +113,7 @@ class Converter : public rclcpp::Node{
 		 	}
 		}
 		
+		/** Callback for Pose message. Estimtes velocity along x-axis from pose and relative derivative**/
 		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
 			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
 

@@ -1,7 +1,5 @@
 // Standard library includes
 #include <vector>
-#include"PID.cpp"
-#include "complementaryfilter.cpp"
 
 //ROS includes
 #include <rclcpp/rclcpp.hpp>
@@ -20,7 +18,8 @@
 
 //custom include
 #include "writecsv.cpp"
-
+#include"PID.cpp"
+#include "complementaryfilter.cpp"
 
 
 using namespace std::chrono_literals;
@@ -36,6 +35,7 @@ class VelocityTest:public rclcpp::Node{
 		std::vector<double> pose; //pose=[x_r, y_r] 
 		double deltaT = 0.01; //s 
 		double inputVel = 0.6;
+		double acc_bias = 0.09;
 
 		int count = 0;
     		rclcpp::TimerBase::SharedPtr timer;
@@ -46,7 +46,7 @@ class VelocityTest:public rclcpp::Node{
 		
 		rclcpp::Publisher<dart_interfaces::msg::Commands>::SharedPtr commands_pub;
 	public: 
-    		VelocityTest() : Node("tv"), cf(0.9), pose(2, 0){
+    		VelocityTest() : Node("tv"), cf(0.985), pose(2, 0){
 			rclcpp::QoS custom_qos(10);
 			
 			auto sub_opt = rclcpp::SubscriptionOptions();
@@ -69,53 +69,54 @@ class VelocityTest:public rclcpp::Node{
 		}
 
     
-
-void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
-	estVel_acc += msg->linear_acceleration.x * deltaT;
-}
-
-
-void timerCallback(){
-	if(count < 200){
-		double estvel=cf.update(estVel_pos,estVel_acc);
-	      	std::vector<double> v(2,0);
-	     	v[0] = inputVel;
-	     	v[1] = estvel;
-	      	file_vel.writeData (v);
-	    	RCLCPP_INFO(this->get_logger(), "acc %f pos %f est %f", estVel_acc, estVel_pos, estvel);
-		count++;	
-	}else{
-		inputVel = 0;
-	}
-	auto msg = new dart_interfaces::msg::Commands();
-	msg->header.stamp  = now();
-	msg->steering.data = 0;
-	msg->throttle.data = inputVel; //Or 0.5?
-	commands_pub->publish(*msg);
-	
-}
-
-void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
-			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
-
-			// 3x3 Rotation matrix from quaternion
-			tf2::Matrix3x3 m(q);
-
-			// Roll Pitch and Yaw from rotation matrix
-			double roll, pitch, yaw;
-			m.getRPY(roll, pitch, yaw);
-			double x_dot=(msg->pose.position.x-pose[0])/deltaT;
-			double psi_dot=(yaw-old_yaw)/deltaT;
-			estVel_pos=x_dot-psi_dot*msg->pose.position.y;
-			
-
-			
-		    	pose[0] =  msg->pose.position.x;
-		    	pose[1] =  msg->pose.position.y;
-			old_yaw=yaw;
-
-		 	//ok = true;
+		/** Callback for Imu message. Removes accelerometer bias, then computes instant velocity and adds it to the computed speed (estimated from accelerometer) **/
+		void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
+			estVel_acc += (msg->linear_acceleration.x - acc_bias) * deltaT ;
 		}
+
+
+		void timerCallback(){
+			if(count < 200){
+				double estvel=cf.update(estVel_pos,estVel_acc);
+				  	std::vector<double> v(2,0);
+				 	v[0] = inputVel;
+				 	v[1] = estvel;
+				  	file_vel.writeData (v);
+					RCLCPP_INFO(this->get_logger(), "acc %f pos %f est %f", estVel_acc, estVel_pos, estvel);
+				count++;	
+			}else{
+				inputVel = 0;
+			}
+			auto msg = new dart_interfaces::msg::Commands();
+			msg->header.stamp  = now();
+			msg->steering.data = 0;
+			msg->throttle.data = inputVel; 
+			commands_pub->publish(*msg);
+			
+		}
+
+		/** Callback for Pose message. Estimtes velocity along x-axis from pose and relative derivative**/
+		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
+					tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
+
+					// 3x3 Rotation matrix from quaternion
+					tf2::Matrix3x3 m(q);
+
+					// Roll Pitch and Yaw from rotation matrix
+					double roll, pitch, yaw;
+					m.getRPY(roll, pitch, yaw);
+					double x_dot=(msg->pose.position.x-pose[0])/deltaT;
+					double psi_dot=(yaw-old_yaw)/deltaT;
+					estVel_pos=x_dot-psi_dot*msg->pose.position.y;
+					
+
+					
+						pose[0] =  msg->pose.position.x;
+						pose[1] =  msg->pose.position.y;
+					old_yaw=yaw;
+
+				 	//ok = true;
+				}
 
 };
 

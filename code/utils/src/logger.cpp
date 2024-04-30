@@ -10,7 +10,7 @@
 #include "bbm_interfaces/msg/lineparams.hpp"
 #include "writecsv.cpp"
 	
-		
+/** Method that writes in a file the line params and the position of the rover **/
 class Logger : public rclcpp::Node{
 	private:
 		// subscriber 
@@ -29,8 +29,8 @@ class Logger : public rclcpp::Node{
         		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&Logger::poseCallback, this, std::placeholders::_1), sub_opt);
       			RCLCPP_INFO(this->get_logger(), "Logger_Node started");
 		}
-		
 	
+		/** Method that prints the rover position in a file **/
 		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
 			std::vector<double> pose(2,0);
 		    	pose[0] =  msg->pose.position.x;
@@ -38,7 +38,7 @@ class Logger : public rclcpp::Node{
 			file_robot.writeData (pose);
 		}
 		
-		
+		/** Method that prints the line parameters in a file **/
 		void lineParamsCallback(const bbm_interfaces::msg::Lineparams::SharedPtr msg){
 			std::vector<double> line(2,0);
 		    	line[0] =  msg->x;
