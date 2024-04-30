@@ -1,0 +1,43 @@
+launch:
+
+# DART commands & sensors
+#- node:
+#        pkg: "dart_wrapper"
+#        exec: "dart_com"
+        
+# ZED node
+- include:
+        file: "/home/student_a/bbm_ws/src/zed-ros2-wrapper/zed_wrapper/launch/zed_camera.launch.py"
+        arg:
+        -
+          name: "camera_model"
+          value: "zed2i"
+
+# Lidar Node
+- include:
+        file: "/home/student_a/bbm_ws/src/ydlidar_ros2_driver/launch/ydlidar_launch.py"
+
+# Converter node
+- node:
+        pkg: "utils"
+        exec: "converter"
+
+# Failsafe node
+#- node:
+#        pkg: "utils"
+#        exec: "failsafe"
+        
+# Logger node
+- node:
+        pkg: "utils"
+        exec: "logger"
+
+# BBM Vision node
+- node:
+        pkg: "bbm"
+        exec: "bbm_vision_node"
+
+# BBM Control node
+- node:
+        pkg: "bbm"
+        exec: "bbm_control_node"
