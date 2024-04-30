@@ -38,7 +38,7 @@ target_include_directories(failsafe PUBLIC
   
 
 #Converter node part
-add_executable( converter src/converter.cpp src/PID.cpp src/complementaryFilter.cpp) 
+add_executable( converter src/converter.cpp src/PID.cpp src/complementaryfilter.cpp) 
 
 ament_target_dependencies(converter rclcpp std_msgs geometry_msgs sensor_msgs dart_interfaces)
 
@@ -51,7 +51,7 @@ target_include_directories(converter PUBLIC
   
   
 #Logger node part
-add_executable( logger src/logger.cpp) 
+add_executable( logger src/logger.cpp src/writecsv.cpp) 
 
 ament_target_dependencies(logger rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
 
@@ -62,6 +62,18 @@ target_include_directories(logger PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
     
+
+#VelocityTest node part
+add_executable( velocitytest src/velocitytest.cpp src/complementaryfilter.cpp src/writecsv.cpp) 
+
+ament_target_dependencies(velocitytest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
+
+install(TARGETS velocitytest
+  DESTINATION lib/${PROJECT_NAME})
+
+target_include_directories(velocitytest PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
   
   
   
