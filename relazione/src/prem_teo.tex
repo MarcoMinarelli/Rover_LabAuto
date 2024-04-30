@@ -154,6 +154,7 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
       \caption{Rappresentazione a blocchi di un controllore PID}
       \label{img:PID}
     \end{figure}
+    \noindent
   Si consideri un generico sistema $P(s)$ da controllare attraverso un controllore $C(s)$, come mostrato in \autoref{img:PID}. Esistono varie tecniche per realizzare il controllore; una delle più utilizzate è la tecnica PID, dove l'acronimo definisce le tre leggi di controllo Proporzionale, Integrale e Derivativo. L'errore misurato, dato dalla differenza tra il riferimento e l'uscita effettiva 
     del sistema, è l'ingresso del controllore, il quale genera un segnale di uscita $u$ composto dalle tre componenti 
     proporzionale, integrale e derivativa:
@@ -182,6 +183,7 @@ Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica an
     \caption{Schema PID con back calculation and tracking}
     \label{img:antiwindup}
 \end{figure}
+\noindent
 In questa tecnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
 \begin{equation}
 U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s)}_\text{BC\&T}

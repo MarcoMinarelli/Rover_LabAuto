@@ -228,4 +228,10 @@ Provenendo da sensori diversi, le misurazioni della velocità di entrambi i rami
     \includesvg[width=0.8\linewidth]{img/Filtro complementare}
     \caption{Filtro complementare}
     \label{fig:Filtro complementare}
-\end{figure}
+\end{figure} 
+\noindent
+Il filtro è stato implementato con la seguente formula
+\begin{equation}
+\boldsymbol{v_{est}}=\alpha \boldsymbol{v_{pose}}+(1-\alpha) \boldsymbol{v_{acc}}
+\end{equation} 
+in cui il paramemtro $\alpha$ induica la percentuale delle due grandezze di ingresso che concorrono a determinare la stima della velocità.
