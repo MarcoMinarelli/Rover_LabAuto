@@ -34,7 +34,7 @@ class VelocityTest:public rclcpp::Node{
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
 		double deltaT = 0.01; //s 
-		double inputVel = 0.6;
+		double inputVel = 0.2;
 		double acc_bias = 0.09;
 
 		int count = 0;
@@ -76,14 +76,18 @@ class VelocityTest:public rclcpp::Node{
 
 
 		void timerCallback(){
-			if(count < 200){
-				double estvel=cf.update(estVel_pos,estVel_acc);
+			if(count < 600){
+					double estvel=cf.update(estVel_pos,estVel_acc);
 				  	std::vector<double> v(2,0);
 				 	v[0] = inputVel;
 				 	v[1] = estvel;
 				  	file_vel.writeData (v);
 					RCLCPP_INFO(this->get_logger(), "acc %f pos %f est %f", estVel_acc, estVel_pos, estvel);
-				count++;	
+				count++;
+				if(count>200 && count<400)
+					inputVel=0.4;
+				if(count>400)
+					inputVel=0.6;	
 			}else{
 				inputVel = 0;
 			}
