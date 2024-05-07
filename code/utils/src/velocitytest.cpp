@@ -62,7 +62,7 @@ class VelocityTest:public rclcpp::Node{
 
            		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&VelocityTest::poseCallback, this, std::placeholders::_1), sub_opt);
 
-        		commands_pub = this->create_publisher<dart_interfaces::msg::Commands>("dart/commands", 10);
+        		commands_pub = this->create_publisher<dart_interfaces::msg::Commands>("/dart/commands", 10);
 
       			RCLCPP_INFO(this->get_logger(), "Test velocity node started");
 
@@ -76,27 +76,36 @@ class VelocityTest:public rclcpp::Node{
 
 
 		void timerCallback(){
-			if(count < 600){
+			double steer=0;
+			if(count < 830){
+				if(count<30){
+					steer=0;
+					inputVel=0;
+			
+				} else{ 
+					steer=15;
 					double estvel=cf.update(estVel_pos,estVel_acc);
 				  	std::vector<double> v(2,0);
 				 	v[0] = inputVel;
 				 	v[1] = estvel;
 				  	file_vel.writeData (v);
-					RCLCPP_INFO(this->get_logger(), "acc %f pos %f est %f", estVel_acc, estVel_pos, estvel);
-				count++;
-				if(count>200 && count<400)
-					inputVel=0.4;
-				if(count>400)
-					inputVel=0.6;	
+					RCLCPP_INFO(this->get_logger(), " %f,  %f",v[0],  v[1]);
+					
+					if(count>30 && count <230) inputVel=0.2;
+					if(count>230 && count<430) inputVel=0.4;
+					if(count>430 && count<630) inputVel=0.6;
+					if (count>630) inputVel=0.8;
+				}	 
 			}else{
 				inputVel = 0;
 			}
+			// RCLCPP_INFO(this->get_logger(), "inputVel %f", inputVel);
 			auto msg = new dart_interfaces::msg::Commands();
 			msg->header.stamp  = now();
-			msg->steering.data = 0;
+			msg->steering.data = steer;
 			msg->throttle.data = inputVel; 
 			commands_pub->publish(*msg);
-			
+			count++;
 		}
 
 		/** Callback for Pose message. Estimtes velocity along x-axis from pose and relative derivative**/

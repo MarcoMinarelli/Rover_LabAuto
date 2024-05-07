@@ -56,7 +56,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p(1,1,1,10,1,7), cf(0.985), pose(2, 0) {
+		Converter() : Node("converter"), p(1,1,1,0.01,1,0.8), cf(0.985), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -96,7 +96,7 @@ class Converter : public rclcpp::Node{
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
 		void timerCallback(){
 			if(ok){
-				double steering = steering_current + deltaT*desAng;
+				double steering = steering_current + deltaT*desAng + 15; //15 experimental values
 				steering_current=steering;
 				double throttle = 0;
 				double error = desVel - cf.update(estVel_pos, estVel_acc);
