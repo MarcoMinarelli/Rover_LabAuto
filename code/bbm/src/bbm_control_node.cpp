@@ -58,7 +58,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		double omega_max; //angular velocity limits inn [deg/s]
 		
 		bool ok = false;
-		
+		int count = 0;
 		
 		/** Method that compute the distance between two points **/
 		double distance (std::vector<double> x1, std::vector<double> x2){
@@ -228,13 +228,13 @@ class BBM_Control_Node : public rclcpp::Node{
 			delta=3;
 			k_theta=2;
 			delta1=0.5; // delta1 in (0, 1)
-			delta2=2; // delta2 > 0
+			delta2=2;   // delta2 > 0
 			d1=0.1;
 			d2=0.01;
 			d3=0.001;
-			v_min=0;
-			v_max=0.8;
-			omega_max=28;
+			v_min=0;   // 0 is the output of throttle of 0 - 0.2
+			v_max=1.5; // 1.5 is the output of throttle of 0.8
+			omega_max=28; // experimental max angular velocity value
 			
 			// initial line params
 			x_a=0; 
@@ -320,13 +320,13 @@ class BBM_Control_Node : public rclcpp::Node{
 		}
 		
 		/** Method that compute the linear and angular velocity in order to converge to the line **/
-		void controlCallback(){
-			if (end==true){
+		void controlCallback(){				
+			if (end==true || count < 30){
 				geometry_msgs::msg::Twist msg;
 				msg.linear.x=0;
 				msg.angular.z=0;
 				vel_pub -> publish(msg);	
-					
+				count++;
 			} else{
 				if(ok){
 					std::vector<double> goal=intersection();
