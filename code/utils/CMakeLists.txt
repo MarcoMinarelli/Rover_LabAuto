@@ -76,6 +76,19 @@ target_include_directories(velocitytest PUBLIC
   $<INSTALL_INTERFACE:include>)
   
   
+#PIDTest node part
+add_executable( pidtest src/pidtest.cpp src/complementaryfilter.cpp src/writecsv.cpp src/PID.cpp)  
+
+ament_target_dependencies(pidtest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
+
+install(TARGETS pidtest
+  DESTINATION lib/${PROJECT_NAME})
+
+target_include_directories(pidtest PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+  
+  
   
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
