@@ -186,5 +186,5 @@ Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica an
 \noindent
 In questa tecnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
 \begin{equation}
-U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s)}_\text{BC\&T}
+U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s))}_\text{BC\&T}
 \end{equation}
