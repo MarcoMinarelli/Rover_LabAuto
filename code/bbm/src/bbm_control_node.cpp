@@ -57,8 +57,16 @@ class BBM_Control_Node : public rclcpp::Node{
 		double v_min, v_max; //linear velocity limits, in [m/s] 
 		double omega_max; //angular velocity limits inn [deg/s]
 		
+		
+		double acc_bias = 0;
+		double x_bias = 0;
+		double y_bias = 0;
+
+		
 		bool ok = false;
 		int count = 0;
+		bool arucoReceived = false;
+		int count_pose = 0;
 		
 		/** Method that compute the distance between two points **/
 		double distance (std::vector<double> x1, std::vector<double> x2){
@@ -222,19 +230,19 @@ class BBM_Control_Node : public rclcpp::Node{
 		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360, 16.0){
 			
 			r=0.5;
-			k_a=5;
-			k_r=3;
+			k_a=3;
+			k_r=5;
 			d_inf=1;
-			delta=3;
-			k_theta=2;
+			delta=0.4;
+			k_theta=1;
 			delta1=0.5; // delta1 in (0, 1)
-			delta2=2;   // delta2 > 0
+			delta2=1;   // delta2 > 0
 			d1=0.1;
-			d2=0.01;
+			d2= 0.002; // 0.01°/s in rad/s
 			d3=0.001;
 			v_min=0;   // 0 is the output of throttle of 0 - 0.2
-			v_max=1.5; // 1.5 is the output of throttle of 0.8
-			omega_max=28; // experimental max angular velocity value
+			v_max=0.8; // [m/s]
+			omega_max= 0.48; // experimental max angular velocity value (28°/s) in rad/s
 			
 			// initial line params
 			x_a=0; 
@@ -257,22 +265,30 @@ class BBM_Control_Node : public rclcpp::Node{
       			RCLCPP_INFO(this->get_logger(), "BBM_Control_Node started");
 		}
 		
-		/** Method that stores the pose for later usage **/
+		/** Callback for Pose message. Estimates velocity along x-axis from pose and relative derivative**/
+		// Pose rate: 100 Hz
 		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
-			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
-
-			// 3x3 Rotation matrix from quaternion
-			tf2::Matrix3x3 m(q);
-
-			// Roll Pitch and Yaw from rotation matrix
-			double roll, pitch, yaw;
-			m.getRPY(roll, pitch, yaw);
 			
-		    pose[0] =  msg->pose.position.x;
-		    pose[1] =  msg->pose.position.y;
-		  
-		    
-		    ok = true;
+			if(count_pose < 60){
+				x_bias += msg->pose.position.x;
+				y_bias += msg->pose.position.y;
+
+				count_pose++;
+			}else{
+				if(count == 60){
+					x_bias = x_bias/count_pose;
+					y_bias = y_bias/count_pose;
+
+					count_pose++;
+				}		
+						
+				pose[0] =  msg->pose.position.x - x_bias;
+				pose[1] =  msg->pose.position.y - y_bias;
+
+				
+				ok = true;
+				//RCLCPP_INFO(this->get_logger(), " %f %f %f ",  msg->pose.position.x - x_bias,  msg->pose.position.y - y_bias, yaw - yaw_bias);
+			}
 		}
 		
 		/** Method that stores the parameters of the line towards which the robot has to converge **/
@@ -284,6 +300,8 @@ class BBM_Control_Node : public rclcpp::Node{
 			dx=msg->dx;
 			vert=msg->vert;
 			end=msg->end;
+			
+			arucoReceived = true;
 		}
 		
 		/** Method that stores the LiDar ranges for later usage **/
@@ -329,7 +347,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				count++;
 			} else{
 				if(ok){
-					std::vector<double> goal=intersection();
+					std::vector<double> goal= arucoReceived ? intersection() : std::vector<double>{pose[0]+0.3, pose[1]} ;
 					std::vector<double> f_attr=computeAttractiveForce(goal);
 					std::vector<double> f_rep= computeRepulsiveForce();
 					std::vector<double> f_tot= sum(f_attr,f_rep);
@@ -349,6 +367,7 @@ class BBM_Control_Node : public rclcpp::Node{
 					msg.linear.x=v;
 					msg.angular.z=omega;
 					vel_pub -> publish(msg);
+					//RCLCPP_INFO(this->get_logger(), "Valori pubblicati  ");
 				}
 			}
 		}
