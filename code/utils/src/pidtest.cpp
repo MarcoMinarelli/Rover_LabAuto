@@ -54,7 +54,7 @@ class PIDTest:public rclcpp::Node{
 		
 		rclcpp::Publisher<dart_interfaces::msg::Commands>::SharedPtr commands_pub;
 	public: 
-    		PIDTest() : Node("PIDTest"), cf(0.985), pose(2, 0), p(0.158, 4.5, 0.0012, deltaT,0.8, 0.65, 0.2){
+    		PIDTest() : Node("PIDTest"), cf(0.985), pose(2, 0), p(0.158, 4.5, 0.0012, deltaT, 0.65, 0.2){
 				rclcpp::QoS custom_qos(10);
 				
 				auto sub_opt = rclcpp::SubscriptionOptions();
