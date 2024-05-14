@@ -14,12 +14,13 @@ class PID{
 		double Tt;
 		double sum;
 		double last_err;
-		double U;
+		double U_max;
+		double U_min;
 		
 		
 	public:
 	
-		PID(double p, double i, double d, double deltaT, double Tt, double U): kp(p), ki(i), kd(d), deltaT(deltaT), Tt(Tt), U(U){
+		PID(double p, double i, double d, double deltaT, double Tt, double U_max,double U_min): kp(p), ki(i), kd(d), deltaT(deltaT), Tt(Tt), U_max(U_max), U_min(U_min){
 			sum=0;
 			last_err=0;
 		}
@@ -34,10 +35,11 @@ class PID{
 			ret=ret+(e-last_err)/deltaT;
 			last_err=e;
 			
-			if(fabs(ret)>U){
-				double u_s=(ret>0) ? U:-U;
-				ret=ret+(u_s-ret)/Tt;
+			if(ret>U_max){
+				//double u_s=(ret>0) ? U:-U;
+				ret=U_max;
 			}
+			if (ret<U_min) ret=U_min;
 			return ret;
 		}
 		
