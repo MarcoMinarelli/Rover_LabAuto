@@ -39,17 +39,18 @@ class PID{
 		double compute(double e){
 			double ret=kp*e;
 			
-			sum=sum+e;
-			ret=ret+sum*ki*deltaT;
+			double new_sum;
+			new_sum=sum+e;
+			ret=ret+new_sum*ki*deltaT;
 			
 			ret=ret+(e-last_err)/deltaT;
 			last_err=e;
 			
 			if(ret>U_max){
-				sum_bct = sum_bct + (U_max-ret);
-				ret= ret + 1/Tt * deltaT * sum_bct;
+				ret=U_max;
 			}
-			if (ret<U_min) ret=U_min;
+			else if (ret<U_min) ret=U_min;
+			/* else*/  sum=new_sum;
 			return ret;
 		}
 		

@@ -34,7 +34,7 @@ class PIDTest:public rclcpp::Node{
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
 		double deltaT = 0.03; //s 
-		double desvel = 0.2; //[m/s]
+		double desvel = 0.8; //[m/s]
 		
 		double acc_bias = 0;
 		double x_bias = 0;
@@ -54,7 +54,7 @@ class PIDTest:public rclcpp::Node{
 		
 		rclcpp::Publisher<dart_interfaces::msg::Commands>::SharedPtr commands_pub;
 	public: 
-    		PIDTest() : Node("PIDTest"), cf(0.985), pose(2, 0), p(0.158, 4.5, 0.0012, deltaT, 0.65, 0.2){
+    		PIDTest() : Node("PIDTest"), cf(0.985), pose(2, 0), p(0.158, 18.0 , 0.0012 , deltaT, 1,  0.65, 0.2){
 				rclcpp::QoS custom_qos(10);
 				
 				auto sub_opt = rclcpp::SubscriptionOptions();
