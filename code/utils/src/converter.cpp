@@ -39,8 +39,17 @@ class Converter : public rclcpp::Node{
 		double estVel_pos;
 		double old_yaw;
 		std::vector<double> pose; //pose=[x_r, y_r] 
-		double deltaT = 0.01; //s
-		double acc_bias = 0.09;
+		double deltaT = 0.03; //s
+		
+		
+		double acc_bias = 0;
+		double x_bias = 0;
+		double y_bias = 0;
+		double yaw_bias = 0;
+		
+		int count = 0;
+		int count_acc = 0;
+		int count_pose = 0;
 		
 		bool ok; 
 		rclcpp::TimerBase::SharedPtr timer;
@@ -56,7 +65,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p(1,1,1,0.01,1,0.8), cf(0.985), pose(2, 0) {
+		Converter() : Node("converter"), p(0.158, 3.250 , 0.0012 , deltaT, 0.65, 0.2), cf(0.985), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -73,7 +82,7 @@ class Converter : public rclcpp::Node{
 
 
         		imuSub = create_subscription<sensor_msgs::msg::Imu>( "/zed/zed_node/imu/data", custom_qos, std::bind(&Converter::imuCallback, this, std::placeholders::_1), sub_opt);
-			timer = this->create_wall_timer(10ms, std::bind(&Converter::timerCallback, this));
+			timer = this->create_wall_timer(30ms, std::bind(&Converter::timerCallback, this));
 			poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&Converter::poseCallback, this, std::placeholders::_1), sub_opt);
         	
         		commands_pub = this->create_publisher<dart_interfaces::msg::Commands>("dart/commands", 10);
@@ -89,14 +98,23 @@ class Converter : public rclcpp::Node{
 		
 	
 		/** Callback for Imu message. Removes accelerometer bias, then computes instant velocity and adds it to the computed speed (estimated from accelerometer) **/
+		// IMU rate: 200 Hz
 		void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg){
-			estVel_acc += (msg->linear_acceleration.x - acc_bias) * deltaT ;
+			if(count_acc < 120){
+				acc_bias += msg->linear_acceleration.x;
+				count_acc++;
+			}else{
+				if(count_acc == 120) acc_bias = acc_bias/count_acc;
+				estVel_acc += (msg->linear_acceleration.x - acc_bias) * deltaT ;
+				//RCLCPP_INFO(this->get_logger(), " acc %f", msg->linear_acceleration.x - acc_bias);
+				
+			}
 		}
 	
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
 		void timerCallback(){
 			if(ok){
-				double steering = steering_current + deltaT*desAng + 15; //15 experimental values
+				double steering = steering_current + deltaT * (desAng * 180 /3.14)   + 15; //15 experimental values
 				steering_current=steering;
 				double throttle = 0;
 				double error = desVel - cf.update(estVel_pos, estVel_acc);
@@ -113,7 +131,8 @@ class Converter : public rclcpp::Node{
 		 	}
 		}
 		
-		/** Callback for Pose message. Estimtes velocity along x-axis from pose and relative derivative**/
+		/** Callback for Pose message. Estimates velocity along x-axis from pose and relative derivative**/
+		// Pose rate: 100 Hz
 		void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
 			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
 
@@ -123,17 +142,32 @@ class Converter : public rclcpp::Node{
 			// Roll Pitch and Yaw from rotation matrix
 			double roll, pitch, yaw;
 			m.getRPY(roll, pitch, yaw);
-			double x_dot=(msg->pose.position.x-pose[0])/deltaT;
-			double psi_dot=(yaw-old_yaw)/deltaT;
-			estVel_pos=x_dot-psi_dot*msg->pose.position.y;
 			
+			if(count_pose < 60){
+				x_bias += msg->pose.position.x;
+				y_bias += msg->pose.position.y;
+				yaw_bias += yaw;
+				count_pose++;
+			}else{
+				if(count == 60){
+					x_bias = x_bias/count_pose;
+					y_bias = y_bias/count_pose;
+					yaw_bias = yaw_bias/count_pose;
+				}		
+						
+				double x_dot=( (msg->pose.position.x -x_bias)  -pose[0])/deltaT;
+				double psi_dot=((yaw - yaw_bias) - old_yaw)/deltaT;
+				estVel_pos=x_dot-psi_dot*(msg->pose.position.y -y_bias  );
+				
 
-			
-		    	pose[0] =  msg->pose.position.x;
-		    	pose[1] =  msg->pose.position.y;
-			old_yaw=yaw;
-
-		 	ok = true;
+						
+				pose[0] =  msg->pose.position.x - x_bias;
+				pose[1] =  msg->pose.position.y - y_bias;
+				old_yaw= yaw - yaw_bias;
+				
+				ok = true;
+				//RCLCPP_INFO(this->get_logger(), " %f %f %f ",  msg->pose.position.x - x_bias,  msg->pose.position.y - y_bias, yaw - yaw_bias);
+			}
 		}
 			
 		
