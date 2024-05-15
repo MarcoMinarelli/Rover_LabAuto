@@ -175,16 +175,14 @@ K\geq \beta \{\eta+F(\boldsymbol {x})+(\beta-1)|\hat{f}(\boldsymbol {x})-r^n|\}
 \subsubsection{Schemi anti wind-up}
 Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
 Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare così da uscire dalla saturazione. Questo può richiedere tempi lunghi con una conseguente perdita di reattività. \\
-Si usano degli schemi anti wind- up per prevenire questo fenomeno. La tecnica anti wind-up più nota in letteratura  è la  "back calculation and tracking". \\
-    \begin{figure} [H]
+Si usano degli schemi anti wind- up per prevenire questo fenomeno. Una delle tecniche anti wind-up più nota in letteratura  è il  "Clamping". \\
+ \begin{figure} [H]
     \centering
     \fontsize{8}{10}\selectfont
-    \includesvg[width=\linewidth]{img/PIDAntiWindup}
-    \caption{Schema PID con back calculation and tracking}
+    \includesvg[width=1\linewidth]{img/PIDAntiWindupClamping}
+    \caption{Schema PID}
     \label{img:antiwindup}
 \end{figure}
 \noindent
-In questa tecnica il segnale di comando viene confrontato con l'azione di controllo per capire quando gli attuatori sono in saturazione. Quando il sistema si trova in saturazione si modifica il termine dell'azione integrale per contrastare gli effetti della carica. L'azione integrale viene scaricata attraverso una legge che porta il suo contributo il più possibile vicino al valore di soglia con una certa costante di tempo opportuna.
-\begin{equation}
-U(s)=\underbrace{U_P(s)+U_D(s)+U_I(s)}_\text{PID ideale}+\underbrace{\frac{1}{T_t}(U_s(s)-U(s))}_\text{BC\&T}
-\end{equation}
+In questa tecnica il segnale di comando viene confrontato con le due soglie scelte come valore massimo e minimo di saturazione del PID. Quando il sistema si trova in saturazione non viene aggiornata la somma dell'azione integrale, in tale modo la somma rimane invariata rispetto agli istanti precedenti. Se invece siamo all'interno dell'intervallo scelto la somma viene aggiornata con un nuovo valore. 
+
