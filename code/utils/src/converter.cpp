@@ -65,7 +65,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p(0.158, 3.250 , 0.0012 , deltaT, 0.65, 0.2), cf(0.985), pose(2, 0) {
+		Converter() : Node("converter"), p(0.8, 0.85 , 1 , 0.03, 0.65, -0.1), cf(0.985), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -114,15 +114,13 @@ class Converter : public rclcpp::Node{
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
 		void timerCallback(){
 			if(ok){
-				double steering = steering_current + deltaT * (desAng * 180 /3.14)   + 15; //15 experimental values
-				steering_current=steering;
+				double steering = old_yaw + deltaT * (desAng * 180 /3.14) + 13; //15 experimental values
 				double throttle = 0;
-				double error = desVel - cf.update(estVel_pos, estVel_acc);
+				double error = desVel - cf.update(estVel_pos, estVel_acc) * 0.01;
 				
 				throttle = p.compute(error);
 				
-				
-				//RCLCPP_INFO(this->get_logger(), "Throttle calcolato", throttle);
+				//RCLCPP_INFO(this->get_logger(), "filtro %f PID %f",cf.update(estVel_pos, estVel_acc)*0.01, throttle);
 				auto msg = new dart_interfaces::msg::Commands();
 			 	msg->header.stamp  = now();
 			 	msg->steering.data = steering;
@@ -157,7 +155,7 @@ class Converter : public rclcpp::Node{
 						
 				double x_dot=( (msg->pose.position.x -x_bias)  -pose[0])/deltaT;
 				double psi_dot=((yaw - yaw_bias) - old_yaw)/deltaT;
-				estVel_pos=x_dot-psi_dot*(msg->pose.position.y -y_bias  );
+				estVel_pos=x_dot-psi_dot*(msg->pose.position.y - y_bias);
 				
 
 						
