@@ -43,7 +43,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		cv::Matx<float, 4, 1> dist_coeffs = cv::Vec4f::zeros(); 
 		
 		// Node params
-		double maxDist = 0.6; //[m]
+		double maxDist = 0.8;//[m]
 		float markerSize = 0.17f; //[m]
 		
 		/* Transformation between coordinate frames */
@@ -227,8 +227,8 @@ class BBM_Vision_Node : public rclcpp::Node{
 				if(closestMarker >= 0){
 					double r = tvecs[closestMarker](2); 
 					//RCLCPP_INFO(this->get_logger(), "Marker id: %d dist: %f x:%f y: %f, z:%f", markerIds[closestMarker], r, tvecs[closestMarker](0), tvecs[closestMarker](1), tvecs[closestMarker](2));
-					if(r < maxDist){ 
-						//RCLCPP_INFO(this->get_logger(), "Closest Marker id: %d", markerIds[closestMarker]);
+					if(r < maxDist && r>0.1){ 
+						RCLCPP_INFO(this->get_logger(), "Closest Marker id: %d distance %f", markerIds[closestMarker], tvecs[closestMarker][2]);
 						double m, q;
 						tf2::Transform ros2aruco = getTransform(tvecs[closestMarker], rvecs[closestMarker]);
 						tf2::Vector3 origin_rosCoord = ros2aruco*tf2::Vector3(0,0,0); //marker center in ros coordinates 
