@@ -64,29 +64,29 @@ target_include_directories(logger PUBLIC
     
 
 #VelocityTest node part
-add_executable( velocitytest src/velocitytest.cpp src/complementaryfilter.cpp src/writecsv.cpp) 
+#add_executable( velocitytest src/velocitytest.cpp src/complementaryfilter.cpp src/writecsv.cpp) 
 
-ament_target_dependencies(velocitytest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
+#ament_target_dependencies(velocitytest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
 
-install(TARGETS velocitytest
-  DESTINATION lib/${PROJECT_NAME})
+#install(TARGETS velocitytest
+#  DESTINATION lib/${PROJECT_NAME})
 
-target_include_directories(velocitytest PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+#target_include_directories(velocitytest PUBLIC
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#  $<INSTALL_INTERFACE:include>)
   
   
 #PIDTest node part
-add_executable( pidtest src/pidtest.cpp src/complementaryfilter.cpp src/writecsv.cpp src/PID.cpp)  
+#add_executable( pidtest src/pidtest.cpp src/complementaryfilter.cpp src/writecsv.cpp src/PID.cpp)  
 
-ament_target_dependencies(pidtest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
+#ament_target_dependencies(pidtest rclcpp std_msgs geometry_msgs dart_interfaces bbm_interfaces)
 
-install(TARGETS pidtest
-  DESTINATION lib/${PROJECT_NAME})
+#install(TARGETS pidtest
+#  DESTINATION lib/${PROJECT_NAME})
 
-target_include_directories(pidtest PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+#target_include_directories(pidtest PUBLIC
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#  $<INSTALL_INTERFACE:include>)
   
   
   
