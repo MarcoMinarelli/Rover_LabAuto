@@ -86,7 +86,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				double c=pow(pose[0],2)+pow(q,2)+pow(pose[1],2)-2*q*pose[1]-pow(r,2);
 				double delta=pow(b,2)-4*a*c;
 				double xd=0;
-				RCLCPP_INFO(this->get_logger(), " a %f  b %f  c %f delta %f ",a, b, c, delta);	
+
 				if(delta>0){
 				
 					double x1=(-b+sqrt(delta))/(2*a);
@@ -95,8 +95,6 @@ class BBM_Control_Node : public rclcpp::Node{
 					std::vector<double> c1{x1, m*x1+q};
 					std::vector<double> c2{x2, m*x2+q};
 					
-					RCLCPP_INFO(this->get_logger(), " a %f  b %f  c %f delta %f x1 (%f, %f) x2 (%f, %f) ",a, b, c, delta, x1, c1[1], c2[0], c2[1]);
-					//RCLCPP_INFO(this->get_logger(), "c1.x %f c2.x %f", c1[0], c2[0]);	
 					if(distance(pose,x_aruco)>r)
 						xd=(distance(c1, x_aruco)>distance(c2, x_aruco))?x1:x2;
 					else{
@@ -157,11 +155,11 @@ class BBM_Control_Node : public rclcpp::Node{
 					yd=pose[1];
 				}
 				
-				//RCLCPP_INFO(this->get_logger(), "result (%f, %f)", x_a, yd);
+
 				ret[0]=x_a;
 				ret[1]=yd;
 			}
-			//RCLCPP_INFO(this->get_logger(), "pose (%f, %f)  intersect (%f, %f)",pose[0], pose[1], ret[0], ret[1]);
+
 			return ret;
 		}
 		
@@ -207,13 +205,10 @@ class BBM_Control_Node : public rclcpp::Node{
 			//RCLCPP_INFO(this->get_logger(), "goal %f %f pose %f %f ", goal[0], goal[1], pose[0], pose[1]);
 			if(dist<=delta){
 				f_attr=minus(goal, pose);
-				//RCLCPP_INFO(this->get_logger(), "dist <=delta %f, %f", f_attr[0], f_attr[1]);
 			}
 			else{
 				f_attr=scalar_prod(1/dist, minus(goal, pose));
-				//RCLCPP_INFO(this->get_logger(), "dist > delta %f, %f", f_attr[0], f_attr[1]);
 			}
-			RCLCPP_INFO(this->get_logger(), "compute attr");
 			return scalar_prod(k_a, f_attr);
 		} 
 			
@@ -385,7 +380,7 @@ class BBM_Control_Node : public rclcpp::Node{
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
 					msg.angular.z=omega;
-					vel_pub -> publish(msg);
+					vel_pub -> publish(msg); 
 				}
 			}
 		}
