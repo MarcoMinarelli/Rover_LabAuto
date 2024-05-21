@@ -36,6 +36,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		
 		//sensor feedback
 		std::vector<double> pose; //pose=[x_r, y_r] 
+		double yaw;
 		std::vector<float> laser;
 		
 		// parameters
@@ -55,7 +56,7 @@ class BBM_Control_Node : public rclcpp::Node{
 		double delta1, delta2; // SMC f(e2) params
 		double d1, d2, d3; //systems' disturbance
 		double v_min, v_max; //linear velocity limits, in [m/s] 
-		double omega_max; //angular velocity limits inn [deg/s]
+		double omega_max; //angular velocity limits in [rad/s]
 		
 		
 		double acc_bias = 0;
@@ -78,25 +79,30 @@ class BBM_Control_Node : public rclcpp::Node{
 		std::vector<double> intersection(){
 			std::vector<double> ret(2,0);
 			std::vector<double> x_aruco = {x_a, y_a};
+			//RCLCPP_INFO(this->get_logger(), "x_a %f, y_a %f, vert %d", x_a, y_a, vert);
 			if (vert==false){ // if the line is not vertical, i.e it can be represented as y=mx+q 
 				double b=-2*pose[0]+2*m*q-2*m*pose[1];
 				double a=1+pow(m,2);
 				double c=pow(pose[0],2)+pow(q,2)+pow(pose[1],2)-2*q*pose[1]-pow(r,2);
 				double delta=pow(b,2)-4*a*c;
 				double xd=0;
+				RCLCPP_INFO(this->get_logger(), " a %f  b %f  c %f delta %f ",a, b, c, delta);	
 				if(delta>0){
 				
 					double x1=(-b+sqrt(delta))/(2*a);
 					double x2=(-b-sqrt(delta))/(2*a);
 					
-					std::vector<double> c1(x1, m*x1+q);
-					std::vector<double> c2(x2, m*x2+q);
+					std::vector<double> c1{x1, m*x1+q};
+					std::vector<double> c2{x2, m*x2+q};
+					
+					RCLCPP_INFO(this->get_logger(), " a %f  b %f  c %f delta %f x1 (%f, %f) x2 (%f, %f) ",a, b, c, delta, x1, c1[1], c2[0], c2[1]);
+					//RCLCPP_INFO(this->get_logger(), "c1.x %f c2.x %f", c1[0], c2[0]);	
 					if(distance(pose,x_aruco)>r)
 						xd=(distance(c1, x_aruco)>distance(c2, x_aruco))?x1:x2;
 					else{
-					
-						double m1=c1[1]/c1[0];
-						double m2=c2[1]/c2[0];
+										
+						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
+						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
 					
 						if(dx==true)
 							xd=(m1>m2) ? m2:m1;
@@ -138,8 +144,8 @@ class BBM_Control_Node : public rclcpp::Node{
 						yd=(distance(c1, x_aruco )>distance(c2, x_aruco)) ? y1:y2;	
 					else{
 					
-						double m1=c1[1]/c1[0];
-						double m2=c2[1]/c2[0];
+						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
+						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
 					
 						if(dx==true)
 							yd=(m1>m2) ? m2:m1;
@@ -155,6 +161,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				ret[0]=x_a;
 				ret[1]=yd;
 			}
+			//RCLCPP_INFO(this->get_logger(), "pose (%f, %f)  intersect (%f, %f)",pose[0], pose[1], ret[0], ret[1]);
 			return ret;
 		}
 		
@@ -197,12 +204,16 @@ class BBM_Control_Node : public rclcpp::Node{
 		std::vector<double> computeAttractiveForce(std::vector<double> goal){
 			double dist= distance(pose, goal); 
 			std::vector<double> f_attr(2,0);
-			
-			if(dist<=delta)
+			//RCLCPP_INFO(this->get_logger(), "goal %f %f pose %f %f ", goal[0], goal[1], pose[0], pose[1]);
+			if(dist<=delta){
 				f_attr=minus(goal, pose);
-			else
+				//RCLCPP_INFO(this->get_logger(), "dist <=delta %f, %f", f_attr[0], f_attr[1]);
+			}
+			else{
 				f_attr=scalar_prod(1/dist, minus(goal, pose));
-
+				//RCLCPP_INFO(this->get_logger(), "dist > delta %f, %f", f_attr[0], f_attr[1]);
+			}
+			RCLCPP_INFO(this->get_logger(), "compute attr");
 			return scalar_prod(k_a, f_attr);
 		} 
 			
@@ -229,7 +240,7 @@ class BBM_Control_Node : public rclcpp::Node{
 	public:
 		BBM_Control_Node() : Node("bbm_control_node"), pose(2,0), laser (360, 16.0){
 			
-			r=0.5;
+			r=1.5;
 			k_a=3;
 			k_r=5;
 			d_inf=1;
@@ -260,7 +271,9 @@ class BBM_Control_Node : public rclcpp::Node{
         		lpSub = create_subscription<bbm_interfaces::msg::Lineparams>( "/bbm/line_params", custom_qos, std::bind(&BBM_Control_Node::lineParamsCallback, this, std::placeholders::_1), sub_opt);
         		laserSub = create_subscription<sensor_msgs::msg::LaserScan>( "/scan", custom_qos, std::bind(&BBM_Control_Node::laserCallback, this, std::placeholders::_1), sub_opt);
         		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Control_Node::poseCallback, this, std::placeholders::_1), sub_opt);
-  			timer_ = this->create_wall_timer(10ms, std::bind(&BBM_Control_Node::controlCallback, this));
+  			timer_ = this->create_wall_timer(50ms, std::bind(&BBM_Control_Node::controlCallback, this));
+  			
+  			
   			vel_pub= create_publisher<geometry_msgs::msg::Twist> ("/cmd_vel", custom_qos);
       			RCLCPP_INFO(this->get_logger(), "BBM_Control_Node started");
 		}
@@ -279,12 +292,14 @@ class BBM_Control_Node : public rclcpp::Node{
 					x_bias = x_bias/count_pose;
 					y_bias = y_bias/count_pose;
 
-					count_pose++;
 				}		
 						
 				pose[0] =  msg->pose.position.x - x_bias;
 				pose[1] =  msg->pose.position.y - y_bias;
-
+				tf2::Quaternion q(msg->pose.orientation.x,msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
+				tf2::Matrix3x3 m(q);
+				double r, p;
+				m.getRPY(r, p, yaw);
 				
 				ok = true;
 				//RCLCPP_INFO(this->get_logger(), " %f %f %f ",  msg->pose.position.x - x_bias,  msg->pose.position.y - y_bias, yaw - yaw_bias);
@@ -300,8 +315,8 @@ class BBM_Control_Node : public rclcpp::Node{
 			dx=msg->dx;
 			vert=msg->vert;
 			end=msg->end;
-			
 			arucoReceived = true;
+			//RCLCPP_INFO(this->get_logger(), "x_a %f, y_a %f, m %f, q %f, dx %d", x_a, y_a, m, q, dx);
 		}
 		
 		/** Method that stores the LiDar ranges for later usage **/
@@ -340,34 +355,37 @@ class BBM_Control_Node : public rclcpp::Node{
 		/** Method that compute the linear and angular velocity in order to converge to the line **/
 		void controlCallback(){				
 			if (end==true || count < 30){
-				geometry_msgs::msg::Twist msg;
-				msg.linear.x=0;
-				msg.angular.z=0;
-				vel_pub -> publish(msg);	
+				geometry_msgs::msg::Twist t_msg;
+				t_msg.linear.x=0;
+				t_msg.angular.z=0;
+				//RCLCPP_INFO(this->get_logger(), " vel pub %f ",  msg.linear.x);
+				vel_pub -> publish(t_msg);
 				count++;
 			} else{
 				if(ok){
 					std::vector<double> goal= arucoReceived ? intersection() : std::vector<double>{pose[0]+0.3, pose[1]} ;
-					std::vector<double> f_attr=computeAttractiveForce(goal);
+					/*std::vector<double> f_attr=computeAttractiveForce(goal);
 					std::vector<double> f_rep= computeRepulsiveForce();
 					std::vector<double> f_tot= sum(f_attr,f_rep);
 					
 					
-					double v_d = f_tot[0]* cos(pose[2])+ f_tot[1]* sin(pose[2]);
-					double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-pose[2]);
-					
+					double v_d = f_tot[0]* cos(yaw)+ f_tot[1]* sin(yaw);
+					double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-yaw);
+
 					//SMC
-					double u1=-rho1*sign(goal[0]-pose[0]);
-					double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-pose[2]-asin(f(goal[1]-pose[1])));
+					//double u1=-rho1*sign(goal[0]-pose[0]);
+					//double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-yaw-asin(f(goal[1]-pose[1])));
 					
-					double v=v_d*cos(atan2(f_tot[1], f_tot[0])-pose[2])-u1;
-					double omega=omega_d-u2;
+					//double v=v_d*cos(atan2(f_tot[1], f_tot[0])-yaw)-u1;
+					//double omega=omega_d-u2;
 					
+					double v = v_d;
+					double omega = omega_d;
+					RCLCPP_INFO(this->get_logger(), "ftot (%f, %f)  omega %f v %f ",f_tot[0], f_tot[1], omega, v);
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
 					msg.angular.z=omega;
-					vel_pub -> publish(msg);
-					//RCLCPP_INFO(this->get_logger(), "Valori pubblicati  ");
+					vel_pub -> publish(msg); */
 				}
 			}
 		}
