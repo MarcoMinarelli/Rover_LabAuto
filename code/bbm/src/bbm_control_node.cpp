@@ -364,7 +364,7 @@ class BBM_Control_Node : public rclcpp::Node{
 			} else{
 				if(ok){
 					std::vector<double> goal= arucoReceived ? intersection() : std::vector<double>{pose[0]+0.3, pose[1]} ;
-					/*std::vector<double> f_attr=computeAttractiveForce(goal);
+					std::vector<double> f_attr=computeAttractiveForce(goal);
 					std::vector<double> f_rep= computeRepulsiveForce();
 					std::vector<double> f_tot= sum(f_attr,f_rep);
 					
@@ -385,7 +385,7 @@ class BBM_Control_Node : public rclcpp::Node{
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
 					msg.angular.z=omega;
-					vel_pub -> publish(msg); */
+					vel_pub -> publish(msg);
 				}
 			}
 		}
