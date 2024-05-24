@@ -240,7 +240,7 @@ class BBM_Control_Node : public rclcpp::Node{
 			k_r=5;
 			d_inf=1;
 			delta=0.4;
-			k_theta=1;
+			k_theta=3;
 			delta1=0.5; // delta1 in (0, 1)
 			delta2=1;   // delta2 > 0
 			d1=0.1;
@@ -316,8 +316,10 @@ class BBM_Control_Node : public rclcpp::Node{
 		
 		/** Method that stores the LiDar ranges for later usage **/
 		void laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg){
+			RCLCPP_INFO(this->get_logger(), "raga sono dentro");
 			for (int i=0;i<360 ;i++){
 				laser[i]=msg->ranges[i];
+				RCLCPP_INFO(this->get_logger(), "raga sono dentro");
 			}
 		}
 		/** function used in SMC. If e2 ==0, then 1/|e2| = inf and so min is delta2 **/
@@ -368,14 +370,14 @@ class BBM_Control_Node : public rclcpp::Node{
 					double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-yaw);
 
 					//SMC
-					//double u1=-rho1*sign(goal[0]-pose[0]);
-					//double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-yaw-asin(f(goal[1]-pose[1])));
+					double u1=-rho1*sign(goal[0]-pose[0]);
+					double u2=-rho2*sign(atan2(f_tot[1], f_tot[0])-yaw-asin(f(goal[1]-pose[1])));
 					
-					//double v=v_d*cos(atan2(f_tot[1], f_tot[0])-yaw)-u1;
-					//double omega=omega_d-u2;
+					double v=v_d*cos(atan2(f_tot[1], f_tot[0])-yaw)-u1;
+					double omega=omega_d-u2;
 					
-					double v = v_d;
-					double omega = omega_d;
+					//double v = v_d;
+					//double omega = omega_d;
 					RCLCPP_INFO(this->get_logger(), "ftot (%f, %f)  omega %f v %f ",f_tot[0], f_tot[1], omega, v);
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
