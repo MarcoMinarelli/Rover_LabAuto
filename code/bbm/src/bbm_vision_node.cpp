@@ -43,7 +43,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		cv::Matx<float, 4, 1> dist_coeffs = cv::Vec4f::zeros(); 
 		
 		// Node params
-		double maxDist = 0.8;//[m]
+		double maxDist = 1.5;//[m]
 		float markerSize = 0.17f; //[m]
 		
 		/* Transformation between coordinate frames */
@@ -175,13 +175,20 @@ class BBM_Vision_Node : public rclcpp::Node{
 			pose_aruco.setIdentity();
 			fixed2rover.setIdentity();
 			
+			
+			rclcpp::QoS zedQos(10);
+			zedQos.keep_last(10);
+			zedQos.best_effort();
+			zedQos.durability_volatile();
+			
+			
 			rclcpp::QoS custom_qos(10);
 			
 			auto sub_opt = rclcpp::SubscriptionOptions();
 
-        		imgSub = create_subscription<sensor_msgs::msg::Image>( "/zed/zed_node/left/image_rect_color", custom_qos, std::bind(&BBM_Vision_Node::leftImageCallback, this, std::placeholders::_1), sub_opt);
-        		camInfoSub = create_subscription<sensor_msgs::msg::CameraInfo>( "/zed/zed_node/left/camera_info", custom_qos, std::bind(&BBM_Vision_Node::cameraCalibrationCallback, this, std::placeholders::_1), sub_opt);
-        		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", custom_qos, std::bind(&BBM_Vision_Node::poseCallback, this, std::placeholders::_1), sub_opt);
+        		imgSub = create_subscription<sensor_msgs::msg::Image>( "/zed/zed_node/left/image_rect_color", zedQos, std::bind(&BBM_Vision_Node::leftImageCallback, this, std::placeholders::_1), sub_opt);
+        		camInfoSub = create_subscription<sensor_msgs::msg::CameraInfo>( "/zed/zed_node/left/camera_info", zedQos, std::bind(&BBM_Vision_Node::cameraCalibrationCallback, this, std::placeholders::_1), sub_opt);
+        		poseSub = create_subscription<geometry_msgs::msg::PoseStamped>("/zed/zed_node/pose", zedQos, std::bind(&BBM_Vision_Node::poseCallback, this, std::placeholders::_1), sub_opt);
         		paramsPub = create_publisher<bbm_interfaces::msg::Lineparams>  ("/bbm/line_params", custom_qos);
       			RCLCPP_INFO(this->get_logger(), "BBM_Vision_Node started");
 		}
@@ -191,7 +198,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 			tf2::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,  msg->pose.orientation.w);
 
 			// 3x3 Rotation matrix from quaternion
-			tf2::Matrix3x3 m(q);
+			tf2::Matrix3x3 m(q); 
 
 			fixed2rover.setRotation(q);
 			fixed2rover.setOrigin(tf2::Vector3(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z));
