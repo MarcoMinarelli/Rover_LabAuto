@@ -1,4 +1,4 @@
-// standard library includes 
+// standard library includes
 #include <vector>
 #include <cmath>
 
@@ -29,13 +29,13 @@ using namespace std::chrono_literals;
 		
 class BBM_Control_Node : public rclcpp::Node{
 	private:
-		// subscriber 
+		// subscriber
 		rclcpp::Subscription<bbm_interfaces::msg::Lineparams>::SharedPtr lpSub;
 		rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserSub;
 		rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr poseSub;
 		rclcpp::TimerBase::SharedPtr timer_;
 		
-		//Publisher 
+		//Publisher
 		rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub;
 		
 		//sensor feedback
@@ -105,7 +105,7 @@ class BBM_Control_Node : public rclcpp::Node{
 										
 						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
 						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
-						RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
+						//RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
 						if(dx==true)
 							xd=(m1>m2) ? x2:x1;
 						else 
@@ -126,7 +126,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				double yd=m*xd+q;
 				ret[0]=xd;
 				ret[1]=yd;
-			} else{ 
+			} else{
 				double b=-2*pose[1];
 				double c=pow(pose[0],2)+pow(x_a,2)-2*pose[0]*x_a+pow(pose[1],2)-pow(r,2);
 				double delta=pow(b,2)-4*c;
@@ -141,20 +141,20 @@ class BBM_Control_Node : public rclcpp::Node{
 					std::vector<double> c2 = {x_a, y2};
 					
 
-					
-					if(distance(pose, x_aruco)>r)
-						yd=(distance(c1, x_aruco )>distance(c2, x_aruco)) ? y1:y2;	
-					else{
+					//RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f)",c1[0], c1[1], c2[0], c2[1] );
+					if(distance(pose, x_aruco)>r){
+						yd=(distance(c1, x_aruco )>distance(c2, x_aruco)) ? y1:y2;
+					}else{
 					
 						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
 						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
-					
+						//RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
 						if(dx==true)
 							yd=(m1>m2) ? y2:y1;
 						else 
 							yd=(m1>m2) ? y1:y2;		
 					}
-						
+					
 				}else{
 					yd=pose[1];
 				}
@@ -295,16 +295,18 @@ class BBM_Control_Node : public rclcpp::Node{
 			d2= 0.002; // 0.01°/s in rad/s
 			d3=0.001;
 			v_min=0.01;   // 0 is the output of throttle of 0 - 0.2
-			v_max=0.8; // [m/s]
+			v_max=0.6; // [m/s]
 			omega_max= 0.48; // experimental max angular velocity value (28°/s) in rad/s
 			
 			// initial line params
-			x_a=1; 
-			y_a=0; 
+			x_a=2.5;
+			y_a=0;
 			vert=true;
+			m=0;
+			q=1.5;
 			dx=true;
 			end=false;
-			arucoReceived = true;
+			//arucoReceived = true;
 			
 			tf2::Matrix3x3 basis;
 			basis = tf2::Matrix3x3(-1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0);
@@ -359,7 +361,7 @@ class BBM_Control_Node : public rclcpp::Node{
 			vert=msg->vert;
 			end=msg->end;
 			arucoReceived = true;
-			//RCLCPP_INFO(this->get_logger(), "x_a %f, y_a %f, m %f, q %f, dx %d", x_a, y_a, m, q, dx);
+			RCLCPP_INFO(this->get_logger(), "x_a %f, y_a %f, m %f, q %f, dx %d", x_a, y_a, m, q, dx);
 		}
 		
 		/** Method that stores the LiDar ranges for later usage **/
@@ -411,7 +413,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				geometry_msgs::msg::Twist t_msg;
 				t_msg.linear.x=0;
 				t_msg.angular.z=0;
-				RCLCPP_INFO(this->get_logger(), " vel pub %f omega %f ",  t_msg.linear.x, t_msg.angular.z);
+				//RCLCPP_INFO(this->get_logger(), " vel pub %f omega %f ",  t_msg.linear.x, t_msg.angular.z);
 				vel_pub -> publish(t_msg);
 				count++;
 			} else{
@@ -426,6 +428,7 @@ class BBM_Control_Node : public rclcpp::Node{
 					double omega_d = k_theta*(atan2(f_tot[1], f_tot[0])-yaw);
 					
 					double v= v_d>0 ? v_d : 0.1;
+					v = v > v_max ? v_max : v;
 					double omega=omega_d;
 					
 					
@@ -436,7 +439,7 @@ class BBM_Control_Node : public rclcpp::Node{
 					//RCLCPP_INFO(this->get_logger(), "yaw %f ",yaw);
 					double v=v_d*cos(atan2(f_tot[1], f_tot[0])-yaw)-u1;
 					double omega=omega_d-u2;*/
-					
+						
 					RCLCPP_INFO(this->get_logger(), "ftot (%f, %f)  omega %f, v %f, goal (%f, %f) pose (%f, %f) - (%f, %f) ",f_tot[0], f_tot[1], omega, v, goal[0], goal[1], pose[0], pose[1], pose[0]-0.4*cos(yaw), pose[1]-0.4*sin(yaw));
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
