@@ -66,7 +66,7 @@ class Converter : public rclcpp::Node{
 		
 	public:
 	
-		Converter() : Node("converter"), p_v(0.8, 0.85 , 1 , 0.03, 0.65, 0), p_theta (7, 0 , 0 , 0.03, 28, -28), cf(0.985), pose(2, 0) {
+		Converter() : Node("converter"), p_v(0.8, 0.85 , 1 , 0.03, 0.65, 0), p_theta (10, 0 , 0 , 0.03, 28, -28), cf(0.985), pose(2, 0) {
 			rclcpp::QoS custom_qos(10);
 			
 			desVel = 0;
@@ -114,6 +114,15 @@ class Converter : public rclcpp::Node{
 	
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
 		void timerCallback(){
+			if(count <  60){
+				auto msg = new dart_interfaces::msg::Commands();
+				msg->steering.data =0;
+				msg->throttle.data = 0;
+				msg->header.stamp = now();
+				commands_pub->publish(*msg);
+				count++;
+				//RCLCPP_INFO(this->get_logger(), "steering %f", msg->steering.data);
+			}else{
 			if(ok){
 				double des_yaw = old_yaw + deltaT * (desAng * 180 /3.14); 
 				double throttle = 0;
@@ -122,7 +131,7 @@ class Converter : public rclcpp::Node{
 				//RCLCPP_INFO(this->get_logger(), "Steering %f", steering);
 				throttle = p_v.compute(error);
 				double steering=p_theta.compute(des_yaw-old_yaw)+13; //13 experimental values
-				RCLCPP_INFO(this->get_logger(), "Steering %f omega %f", steering, desAng);
+				//RCLCPP_INFO(this->get_logger(), "Steering %f omega %f", steering, desAng);
 			    	//RCLCPP_INFO(this->get_logger(), "filtro %f PID %f",cf.update(estVel_pos, estVel_acc)*0.01, throttle);
 				auto msg = new dart_interfaces::msg::Commands();
 			 	msg->header.stamp  = now();
@@ -130,6 +139,7 @@ class Converter : public rclcpp::Node{
 			 	msg->throttle.data = throttle;
 			 	commands_pub->publish(*msg);
 		 	}
+			}
 		}
 		
 		/** Callback for Pose message. Estimates velocity along x-axis from pose and relative derivative**/
@@ -150,7 +160,7 @@ class Converter : public rclcpp::Node{
 				yaw_bias += yaw;
 				count_pose++;
 			}else{
-				if(count == 60){
+				if(count_pose == 60){
 					x_bias = x_bias/count_pose;
 					y_bias = y_bias/count_pose;
 					yaw_bias = yaw_bias/count_pose;
