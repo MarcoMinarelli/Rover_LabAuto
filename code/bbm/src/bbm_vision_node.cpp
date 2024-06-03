@@ -43,7 +43,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		cv::Matx<float, 4, 1> dist_coeffs = cv::Vec4f::zeros(); 
 		
 		// Node params
-		double maxDist = 1.5;//[m]
+		double maxDist = 2.5;//[m]
 		float markerSize = 0.17f; //[m]
 		
 		/* Transformation between coordinate frames */
@@ -201,7 +201,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 			tf2::Matrix3x3 m(q); 
 
 			fixed2rover.setRotation(q);
-			fixed2rover.setOrigin(tf2::Vector3(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z));
+			fixed2rover.setOrigin(tf2::Vector3(msg->pose.position.x - 0.2, msg->pose.position.y + 0.07, msg->pose.position.z)); //0.2 0.07 offset from camera pose to CoM
 		}
 		
 		/** Method that elaborates left image: scans for ArUco markers, if found then compute the position of the marker, get the line angular coefficient (from the marker id) and finally 
