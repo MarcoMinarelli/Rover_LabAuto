@@ -43,7 +43,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 		cv::Matx<float, 4, 1> dist_coeffs = cv::Vec4f::zeros(); 
 		
 		// Node params
-		double maxDist = 2.5;//[m]
+		double maxDist = 2.0;//[m]
 		float markerSize = 0.17f; //[m]
 		
 		/* Transformation between coordinate frames */
@@ -85,13 +85,13 @@ class BBM_Vision_Node : public rclcpp::Node{
 			tf2::Vector3 topRight =  fixed2rover * transf * tf2::Vector3(markerSize/2, markerSize/2, 0);
 			tf2::Vector3 topLeft =  fixed2rover * transf * tf2::Vector3(-markerSize/2, markerSize/2, 0);
 
-			//RCLCPP_INFO(this->get_logger(), "TopLeft (%f, %f) TopRight(%f, %f)", topLeft.x(), topLeft.y(), topRight.x(), topRight.y());
+			RCLCPP_INFO(this->get_logger(), "TopLeft (%f, %f) TopRight(%f, %f)", topLeft.x(), topLeft.y(), topRight.x(), topRight.y());
 			
 			
 			//Computing the slope of the line that contains both markers' corners. If the marker id is 0 or 1, we'll use this
 			ret = getParallelLineAngularCoefficient(topLeft, topRight);
 			
-			
+			ret.second=ret.second+1;
 			double m;
 			bool ok;
 			if(id == 2){ //desired line forms 45° respect to ArUco
@@ -238,28 +238,49 @@ class BBM_Vision_Node : public rclcpp::Node{
 						RCLCPP_INFO(this->get_logger(), "Closest Marker id: %d distance %f", markerIds[closestMarker], tvecs[closestMarker][2]);
 						double m, q;
 						tf2::Transform ros2aruco = getTransform(tvecs[closestMarker], rvecs[closestMarker]);
-						tf2::Vector3 origin_rosCoord = ros2aruco*tf2::Vector3(0,0,0); //marker center in ros coordinates 
 						
 						// Line params computation
 						tf2::Vector3 x_a = fixed2rover * ros2aruco * tf2::Vector3(0,0,0); //marker center in fixed frame coordinates 
 						
-						//RCLCPP_INFO(this->get_logger(), "Posa: (%f, %f), marker (%f, %f) (%f, %f)", x_a.x(), x_a.y());
 						
-						std::pair<bool, double> res = getAngularCoefficient(markerIds[closestMarker], ros2aruco);
+						bbm_interfaces::msg::Lineparams msg;
+						msg.x = x_a.x();
+						msg.y = x_a.y();
+						switch(markerIds[closestMarker]){
+							case 0:{
+								msg.vert = true;
+								msg.dx = true;
+								msg.end = false; 
+								msg.m = 0;
+								msg.q = 0;
+								break;
+							}
+							case 1:{
+								msg.vert = false;
+								msg.dx = true;
+								msg.end = false;
+								msg.m = 0;
+								msg.q = x_a.y();
+								break;
+							}
+							
+							case 4:{
+								msg.vert = false;
+								msg.dx = true;
+								msg.end = false; 
+								msg.m = 0;
+								msg.q = 0;
+								break;
+							
+							
+							}
 						
-						// if res.first == true, then the line can be represented as y = m*x +q
-						if(res.first){
-							m = res.second;
-							q = x_a.y() - m * x_a.x();
-						}else{
-							m = 0;
-							q = 0;
 						}
 						
 						//RCLCPP_INFO(this->get_logger(), "Parametri retta: m %f q %f", pose[0], pose[1], pose[5]* 57.29578, m, q );
 						
 						// Lineparams message creation
-						bbm_interfaces::msg::Lineparams msg;
+						/*bbm_interfaces::msg::Lineparams msg;
 						msg.x = x_a.x();
 						msg.y = x_a.y();
 						msg.m = m;
@@ -267,7 +288,7 @@ class BBM_Vision_Node : public rclcpp::Node{
 						msg.vert = !res.first;
 						msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2); //  direction of the line
 						msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
-						
+						*/
 						
 						paramsPub -> publish(msg);
 						

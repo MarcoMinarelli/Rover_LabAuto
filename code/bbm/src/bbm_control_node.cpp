@@ -90,6 +90,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				double c=pow(pose[0],2)+pow(q,2)+pow(pose[1],2)-2*q*pose[1]-pow(r,2);
 				double delta=pow(b,2)-4*a*c;
 				double xd=0;
+				RCLCPP_INFO(this->get_logger(), "delta %f",delta );
 
 				if(delta>0){
 				
@@ -105,11 +106,14 @@ class BBM_Control_Node : public rclcpp::Node{
 										
 						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
 						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
-						//RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
-						if(dx==true)
-							xd=(m1>m2) ? x2:x1;
-						else 
-							xd=(m1>m2) ? x1:x2;		
+						RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
+						if(dx==true){
+							if (m1>0 && m2>0) xd=(m1>m2) ? x1:x2;
+							else xd=(m1>m2) ? x2:x1;
+						}else{
+							if (m1>0 && m2>0) xd=(m1>m2) ? x2:x1;
+                                                        else xd=(m1>m2) ? x1:x2;
+						}
 					}
 				}else if(delta==0){
 				
@@ -131,7 +135,7 @@ class BBM_Control_Node : public rclcpp::Node{
 				double c=pow(pose[0],2)+pow(x_a,2)-2*pose[0]*x_a+pow(pose[1],2)-pow(r,2);
 				double delta=pow(b,2)-4*c;
 				double yd=0;
-
+				RCLCPP_INFO(this->get_logger(), "delta %f",delta );
 				if(delta>0){
 				
 					double y1=(-b+sqrt(delta))/(2);
@@ -148,11 +152,15 @@ class BBM_Control_Node : public rclcpp::Node{
 					
 						double m1=(c1[0]==0)? c1[1]/0.01 :  c1[1]/c1[0];
 						double m2=(c2[0]==0)? c2[1]/0.01 :  c2[1]/c2[0];
-						//RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
-						if(dx==true)
-							yd=(m1>m2) ? y2:y1;
-						else 
-							yd=(m1>m2) ? y1:y2;		
+						RCLCPP_INFO(this->get_logger(), "c1 (%f,%f)  c2 (%f, %f), m1 %f, m2 %f",c1[0], c1[1], c2[0], c2[1], m1, m2 );
+						if(dx==true){
+						       if (m1>0 && m2>0 ) yd=(m1>m2) ? y1:y2;
+                                                     if (m1<0 && m2<0 ) yd= (fabs (m1)>fabs (m2))? y1:y2;
+							else yd=(m1>m2) ? y2:y1;
+                                                }else{
+                                                        if (m1>0 && m2>0) yd=(m1>m2) ? y2:y1;
+                                                        else yd=(m1>m2) ? y1:y2;
+                                                }
 					}
 					
 				}else{
@@ -393,7 +401,7 @@ class BBM_Control_Node : public rclcpp::Node{
 			double c3=(((delta1-d3*sqrt(1-pow(delta1, 2)))/d3)*v_min);
 			double c4=(delta1/d3)*v_min-v_max*sqrt(1-pow(delta1,2));
 			double r2=(c3<c4) ? c3:c4;
-			RCLCPP_INFO(this->get_logger(), " c1 %f c2 %f r1 %f Rho1 %f r2 %f c3 %f c4 %f", c1, c2, r1, (r1+0.1), r2, c3 , c4);
+			//RCLCPP_INFO(this->get_logger(), " c1 %f c2 %f r1 %f Rho1 %f r2 %f c3 %f c4 %f", c1, c2, r1, (r1+0.1), r2, c3 , c4);
 			
 			return (r1+0.1); // r1<rho1<r
 				
@@ -402,14 +410,14 @@ class BBM_Control_Node : public rclcpp::Node{
 		/** From [1] **/
 		double computeRho2(){
 			double r3=((d2*omega_max*sqrt(1-pow(delta1,2))+delta2*v_max+delta1*v_min))/((1-d2)*sqrt(1-pow(delta1,2)));
-			RCLCPP_INFO(this->get_logger(), "Rho2 %f r3 %f", r3+0.1, r3);
+			//RCLCPP_INFO(this->get_logger(), "Rho2 %f r3 %f", r3+0.1, r3);
 			return r3+0.1; //rho2>r3 so we sum 0.2
 					
 		}
 		
 		/** Method that compute the linear and angular velocity in order to converge to the line **/
 		void controlCallback(){
-			if (end==true || count < 30){
+			if (count < 30){
 				geometry_msgs::msg::Twist t_msg;
 				t_msg.linear.x=0;
 				t_msg.angular.z=0;
@@ -419,6 +427,10 @@ class BBM_Control_Node : public rclcpp::Node{
 			} else{
 				if(ok /*&& okPose*/){
 					std::vector<double> goal= arucoReceived ? intersection() : std::vector<double>{pose[0]+0.3, pose[1]};
+					if(end){
+						goal = std::vector<double>{x_a, y_a};
+					
+					}
 					std::vector<double> f_attr=computeAttractiveForce(goal);
 					std::vector<double> f_rep= computeRepulsiveForce();
 					std::vector<double> f_tot= sum(f_attr,f_rep);
@@ -439,8 +451,9 @@ class BBM_Control_Node : public rclcpp::Node{
 					//RCLCPP_INFO(this->get_logger(), "yaw %f ",yaw);
 					double v=v_d*cos(atan2(f_tot[1], f_tot[0])-yaw)-u1;
 					double omega=omega_d-u2;*/
-						
-					RCLCPP_INFO(this->get_logger(), "ftot (%f, %f)  omega %f, v %f, goal (%f, %f) pose (%f, %f) - (%f, %f) ",f_tot[0], f_tot[1], omega, v, goal[0], goal[1], pose[0], pose[1], pose[0]-0.4*cos(yaw), pose[1]-0.4*sin(yaw));
+
+					//RCLCPP_INFO(this->get_logger(), "ftot (%f, %f)  omega %f, v %f, goal (%f, %f) pose (%f, %f) - (%f, %f) ",f_tot[0], f_tot[1], omega, v, goal[0], goal[1], pose[0], pose[1], pose[0]-0.4*cos(yaw), pose[1]-0.4*sin(yaw))‹
+					RCLCPP_INFO(this->get_logger(), " goal (%f, %f) pose (%f, %f) - (%f, %f) ", goal[0], goal[1], pose[0], pose[1]);
 					geometry_msgs::msg::Twist msg;
 					msg.linear.x=v;
 					msg.angular.z=omega;
