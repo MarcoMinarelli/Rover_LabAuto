@@ -57,6 +57,11 @@ class BBM_Vision_Node : public rclcpp::Node{
 		tf2::Transform fixed2rover;
 		
 		
+		int lastId = -1;
+		tf2::Vector3 lastMarker = tf2::Vector3(0,0,0);
+		
+		std::vector<int> valid = {0, 1, 2, 3, 4};
+		
 		std::pair<bool, double> getParallelLineAngularCoefficient(tf2::Vector3 x1, tf2::Vector3 x2){
 			bool ok;
 			double m;
@@ -72,6 +77,19 @@ class BBM_Vision_Node : public rclcpp::Node{
 				m = (x1.y() - x2.y())/(x1.x() - x2.x());			
 			}	
 			return std::pair<bool, double>(ok, m);
+		}
+		
+		
+		/** Method that compute the distance between two points **/
+		double distance (tf2::Vector3 x1, tf2::Vector3 x2){
+			return sqrt(pow(x1.x() - x2.x(),2)+pow(x1.y()-x2.y(),2));
+		}
+		
+		bool isValid(int id){
+			bool found = false;
+			for(int i = 0; i < valid.size() && !found; i++)
+				if(id == valid[i]) found = true;
+			return found;
 		}
 		
 		
@@ -231,67 +249,87 @@ class BBM_Vision_Node : public rclcpp::Node{
 				
 				int closestMarker = getClosestMarker(tvecs);
 				//RCLCPP_INFO(this->get_logger(), "Closest marker id: %d", closestMarker);
-				if(closestMarker >= 0){
+				if(closestMarker >= 0 && isValid(markerIds[closestMarker])){
 					double r = tvecs[closestMarker](2); 
 					//RCLCPP_INFO(this->get_logger(), "Marker id: %d dist: %f x:%f y: %f, z:%f", markerIds[closestMarker], r, tvecs[closestMarker](0), tvecs[closestMarker](1), tvecs[closestMarker](2));
 					if(r < maxDist && r>0.1){ 
-						RCLCPP_INFO(this->get_logger(), "Closest Marker id: %d distance %f", markerIds[closestMarker], tvecs[closestMarker][2]);
+						
 						double m, q;
 						tf2::Transform ros2aruco = getTransform(tvecs[closestMarker], rvecs[closestMarker]);
 						
 						// Line params computation
 						tf2::Vector3 x_a = fixed2rover * ros2aruco * tf2::Vector3(0,0,0); //marker center in fixed frame coordinates 
 						
-						
-						bbm_interfaces::msg::Lineparams msg;
-						msg.x = x_a.x();
-						msg.y = x_a.y();
-						switch(markerIds[closestMarker]){
-							case 0:{
-								msg.vert = true;
-								msg.dx = true;
-								msg.end = false; 
-								msg.m = 0;
-								msg.q = 0;
-								break;
-							}
-							case 1:{
-								msg.vert = false;
-								msg.dx = true;
-								msg.end = false;
-								msg.m = 0;
-								msg.q = x_a.y();
-								break;
-							}
+						if(markerIds[closestMarker] != lastId || distance(x_a, lastMarker) > 0.8){
+							RCLCPP_INFO(this->get_logger(), "Closest Marker id: %d distance %f", markerIds[closestMarker], tvecs[closestMarker][2]);
+							lastId = markerIds[closestMarker];
+							lastMarker = x_a;
 							
-							case 4:{
-								msg.vert = false;
-								msg.dx = true;
-								msg.end = false; 
-								msg.m = 0;
-								msg.q = 0;
-								break;
-							
+								
+							bbm_interfaces::msg::Lineparams msg;
+							msg.x = x_a.x();
+							msg.y = x_a.y();
+							switch(markerIds[closestMarker]){
+								case 0:{
+									msg.vert = true;
+									msg.dx = true;
+									msg.end = false;
+									msg.m = 0;
+									msg.q = 0;
+									break;
+								}
+								case 1:{
+									msg.vert = false;
+									msg.dx = true;
+									msg.end = false;
+									msg.m = 0;
+									msg.q = x_a.y();
+									break;
+								}
+								case 2:{
+									msg.vert = true;
+									msg.dx = false;
+									msg.end = false;
+									msg.m = 0;
+									msg.q = 0;
+									break;
+								}
+								case 3:{
+									msg.vert = false;
+									msg.dx = false;
+									msg.end = false;
+									msg.m = 0;
+									msg.q = x_a.y();
+									break;
+								}
+								case 4:{
+									msg.vert = false;
+									msg.dx = true;
+									msg.end = true;
+									msg.m = 0;
+									msg.q = 0;
+									break;
+								
+								
+								}
 							
 							}
-						
+														
+							//RCLCPP_INFO(this->get_logger(), "Parametri retta: m %f q %f", pose[0], pose[1], pose[5]* 57.29578, m, q );
+							
+							// Lineparams message creation
+							/*bbm_interfaces::msg::Lineparams msg;
+							msg.x = x_a.x();
+							msg.y = x_a.y();
+							msg.m = m;
+							msg.q = q;
+							msg.vert = !res.first;
+							msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2); //  direction of the line
+							msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
+							*/
+							
+							paramsPub -> publish(msg);
 						}
-						
-						//RCLCPP_INFO(this->get_logger(), "Parametri retta: m %f q %f", pose[0], pose[1], pose[5]* 57.29578, m, q );
-						
-						// Lineparams message creation
-						/*bbm_interfaces::msg::Lineparams msg;
-						msg.x = x_a.x();
-						msg.y = x_a.y();
-						msg.m = m;
-						msg.q = q;
-						msg.vert = !res.first;
-						msg.dx = (markerIds[closestMarker] == 0 || markerIds[closestMarker] == 2); //  direction of the line
-						msg.end = (markerIds[closestMarker] == 4); // have we found the terminal ArUco?
-						*/
-						
-						paramsPub -> publish(msg);
-						
 						//RCLCPP_INFO(this->get_logger(), "LeftImage");
 					}
 				}	
