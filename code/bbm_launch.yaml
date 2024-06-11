@@ -1,9 +1,9 @@
 launch:
 
 # DART commands & sensors
-#- node:
-#        pkg: "dart_wrapper"
-#        exec: "dart_com"
+- node:
+        pkg: "dart_wrapper"
+        exec: "dart_com"
         
 # ZED node
 - include:
