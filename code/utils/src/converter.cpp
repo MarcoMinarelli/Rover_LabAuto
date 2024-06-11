@@ -2,6 +2,7 @@
 #include <vector>
 #include"PID.cpp"
 #include "complementaryfilter.cpp"
+#include <cmath>
 
 //ROS includes
 #include <rclcpp/rclcpp.hpp>
@@ -107,9 +108,16 @@ class Converter : public rclcpp::Node{
 			}else{
 				if(count_acc == 120) acc_bias = acc_bias/count_acc;
 				estVel_acc += (msg->linear_acceleration.x - acc_bias) * 0.005 ; //deltaT imu=0.005 s
-				//RCLCPP_INFO(this->get_logger(), " acc %f", msg->linear_acceleration.x - acc_bias);
-				
+	
 			}
+		}
+		
+		void sendMessage(double steering, double throttle){
+			auto msg = new dart_interfaces::msg::Commands();
+			msg->header.stamp  = now();
+			msg->steering.data = steering;
+			msg->throttle.data = throttle;
+			commands_pub->publish(*msg);
 		}
 	
 		/** Callback for Timer. Computes from desired angular ad linear velocity the correct steering and throttle values **/
@@ -121,24 +129,19 @@ class Converter : public rclcpp::Node{
 				msg->header.stamp = now();
 				commands_pub->publish(*msg);
 				count++;
-				//RCLCPP_INFO(this->get_logger(), "steering %f", msg->steering.data);
 			}else{
-			if(ok){
-				double des_yaw = old_yaw + deltaT * (desAng * 180 /3.14); 
-				double throttle = 0;
-				double error = desVel - cf.update(estVel_pos, estVel_acc)*0.08;
-				 //RCLCPP_INFO(this->get_logger(), "theta %f omega %f ",old_yaw, deltaT * (desAng * 180 /3.14));
-				//RCLCPP_INFO(this->get_logger(), "Steering %f", steering);
-				throttle = p_v.compute(error);
-				double steering=p_theta.compute(des_yaw-old_yaw)+13; //13 experimental values
-				//RCLCPP_INFO(this->get_logger(), "Steering %f omega %f", steering, desAng);
-			    	RCLCPP_INFO(this->get_logger(), "filtro %f PID %f",cf.update(estVel_pos, estVel_acc)*0.08, throttle);
-				auto msg = new dart_interfaces::msg::Commands();
-			 	msg->header.stamp  = now();
-			 	msg->steering.data = steering;
-			 	msg->throttle.data = throttle;
-			 	commands_pub->publish(*msg);
-		 	}
+				if(ok){
+					if(std::isnan(desAng) || std::isnan(desVel)){
+						sendMessage(0, 0);
+					}else{
+						double des_yaw = old_yaw + deltaT * (desAng * 180 /3.14); 
+						double throttle = 0;
+						double error = desVel - cf.update(estVel_pos, estVel_acc)*0.08;
+						throttle = p_v.compute(error);
+						double steering=p_theta.compute(des_yaw-old_yaw)+13; //13 experimental values
+					    	sendMessage(steering, throttle);
+					}
+			 	}
 			}
 		}
 		
@@ -177,7 +180,6 @@ class Converter : public rclcpp::Node{
 				old_yaw= yaw - yaw_bias;
 				
 				ok = true;
-				//RCLCPP_INFO(this->get_logger(), " %f %f %f ",  msg->pose.position.x - x_bias,  msg->pose.position.y - y_bias, yaw - yaw_bias);
 			}
 		}
 			
