@@ -1,22 +1,29 @@
 \documentclass{article}
-
 \usepackage{graphicx} % Required for inserting images
+
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[italian]{babel}
+
 \usepackage{svg}
+
 \usepackage{amssymb} %per i simboli matematici bellini
 \usepackage{amsmath}%per l'environment split (dividere un'equazione su più righe) 
+
 \usepackage{xcolor} %per i colori dentro lstlistings o s'incazza
 \usepackage{listings}%per le parti di codice
 \usepackage{float}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{fancyhdr} %Per modificare il fondo pagina
+
+
 \usepackage{makecell} %per mettere il testo di una cella su più righe
+
 \usepackage{enumitem} % per le liste interrotte
+
 \usepackage{hyperref} %Per fare i riferimenti. A cose normali verrebbero i link ipertestuali, per toglierli:
 \hypersetup{
     colorlinks=true,
@@ -51,7 +58,7 @@
 \renewcommand{\footrulewidth}{0.4pt}
 
 %\title{Relazione Laboratorio di  Automatica}
-\title{Controllo tramite Potenziali Artificiali di un Rover con marker ArUco}
+\title{Controllo visivo in Sliding mode di un Rover}
 \author{Elena Bellanova \\ Giulio Beltrami \\ Marco Minarelli}
 %\date{March 2024}
 
@@ -84,7 +91,7 @@
 \section{Risultati}
 \input{src/risultati}
 
-\section{Conclusioni}
+\section{Conclusioni e sviluppi futuri}
 \input{src/concl}
 
 \addcontentsline{toc}{section}{Bibliografia}
