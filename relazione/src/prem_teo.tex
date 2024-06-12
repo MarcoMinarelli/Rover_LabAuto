@@ -105,15 +105,7 @@ Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algorit
 \end{figure}
 
 \subsection{Controllori PID}
-    \begin{figure}[h]
-      \centering
-      \includegraphics[width=0.8\textwidth]{img/PID.png}
-      \caption{Rappresentazione a blocchi di un controllore PID}
-      \label{img:PID}
-    \end{figure}
-    \noindent
-  Si consideri un generico sistema $P(s)$ da controllare attraverso un controllore $C(s)$, come mostrato in \autoref{img:PID}. Esistono varie tecniche per realizzare il controllore; una delle più utilizzate è la tecnica PID, dove l'acronimo definisce le tre leggi di controllo Proporzionale, Integrale e Derivativo. L'errore misurato, dato dalla differenza tra il riferimento e l'uscita effettiva 
-    del sistema, è l'ingresso del controllore, il quale genera un segnale di uscita $u$ composto dalle tre componenti 
+Si consideri un generico sistema $P(s)$ da controllare attraverso un controllore $C(s)$, come mostrato in \autoref{img:PID}. Esistono varie tecniche per realizzare il controllore; una delle più utilizzate è la tecnica PID, dove l'acronimo definisce le tre leggi di controllo Proporzionale, Integrale e Derivativo. L'errore misurato, dato dalla differenza tra il riferimento e l'uscita effettiva del sistema, è l'ingresso del controllore, il quale genera un segnale di uscita $u$ composto dalle tre componenti 
     proporzionale, integrale e derivativa:
     \begin{displaymath}
       \boldsymbol{u} = K_P  \boldsymbol{e}  + K_D  \dot{ \boldsymbol{e}} + K_I \int_{0}^t  \boldsymbol{e}(\tau) d\tau 
@@ -128,6 +120,13 @@ Il valore del punto LOS viene aggiornato ogni volta che viene eseguito l'algorit
     \item Il contributo integrale permette eliminare l'errore a regime permanente peggiorando però la risposta transitoria
     \item Il contributo derivativo permette di aumentare la stabilità del sistema.
   \end{itemize}
+    \begin{figure}[h]
+      \centering
+      \includegraphics[width=0.8\textwidth]{img/PID.png}
+      \caption{Rappresentazione a blocchi di un controllore PID}
+      \label{img:PID}
+    \end{figure}
+    \noindent
 
 \subsubsection{Schemi anti wind-up}
 Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
