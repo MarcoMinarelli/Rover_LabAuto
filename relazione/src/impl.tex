@@ -45,16 +45,16 @@ Gli obiettivi del nodo visione sono:
   posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi \cite{marchand2015pose}, i quali possono essere richiamati dalla 
   funzione \texttt{solve\_PnP()} della libreria. Nello specifico in \cite{infinitesimal} è proposto un metodo per risolvere il problema nel caso il target siano dei
   marker. \\
-  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{In realtà la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ -1 & 0 & 0 & 0 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $. Ma, dato che la camera è ruotata di $180^{\circ}$ si ottiene la matrice sopra riportata. }   
+  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{In realtà la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ -1 & 0 & 0 & 0.07 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $. Ma, dato che la camera è ruotata di $180^{\circ}$ si ottiene la matrice sopra riportata. }   
 \begin{equation}
-T^R_C = \begin{bmatrix} 0 & 0 & 1 & 0 \\ 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} 
+T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ 1 & 0 & 0 & 0.07 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} 
 \end{equation}\\ mentre la matrice di trasformazione dalla terna camera alla terna marker da 
 \begin{equation}
 T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{matrix} & 1 \end{bmatrix}
 \end{equation}
-  A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
-
-  L'id del marker identifica sia i parametri della retta che la direzione desiderata come espresso in 
+L'origine della terna camera è stata traslata per portarla nel centro di massa (CdM) del sistema.
+A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
+L'id del marker identifica sia i parametri della retta che la direzione desiderata come espresso in 
   \begin{table} [H]
     \centering
     \begin{tabular}{|ccc|}
@@ -66,6 +66,7 @@ T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{mat
         3 &  $ x = x_A $ & Sinistra\\  \hline
     \end{tabular}
 \end{table}
+
   
 \subsection{Nodo di controllo}
 \subsubsection{APF}
@@ -105,8 +106,13 @@ Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)
         Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
         Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
         \begin{itemize}
-            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il river giri a sinistra
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati fatti tre casi:
+            \begin{itemize}
+            \item quello in cui i coefficienti angolari sono entambi positivi
+            \item quello in cui entrambi i coefficienti angolari sono negativi
+            \item quello in cui il coefficiente angolari di un punto è positivo mentre quello dell'altro è negativo.
+            \end{itemize}
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra. Sono stati implementati tre casi come per la svolta a destra.
         \end{itemize}
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
@@ -149,9 +155,15 @@ Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
   Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
         Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
         \begin{itemize}
-            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il river giri a sinistra
-        \end{itemize}    \item $\Delta=0$ si ha una sola soluzione
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra\\In particolare sono stati fatti tre casi:
+            \begin{itemize}
+            \item quello in cui i coefficienti angolari sono entambi positivi
+            \item quello in cui entrambi i coefficienti angolari sono negativi
+            \item quello in cui il coefficiente angolari di un punto è positivo mentre quello dell'altro è negativo.
+            \end{itemize}
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra. Sono stati implementati tre casi come per la svolta a destra.
+        \end{itemize}
+    \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
         y_d=y_r
         \end{equation}
