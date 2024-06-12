@@ -1,29 +1,36 @@
 \label{sec:res}
+Le prove svolte, atte a testare il corretto funzionemaento del rover e delle tecniche di controllo implememntate, sono le seguenti:
+\begin{enumerate}
+  \item esecuzione di una traiettoria rettangolare 
+  \item esecuzione di una greca 
+  \item esecuzione di una traiettoria rettangolare con APF 
+\end{enumerate}
+ Implementando una funzione in grado di salvare in formato .csv i dati della posizione del rover, durante il suo movimento, è stato possibile realizzare un plot in cui si mostra la traiettoria desiderata (Ground trought) a confronto con quella realizzata dal rover (Robot trajectory).
 
-\subsection{Traiettoria Rettangolare}
-
+\subsection{Traiettoria rettangolare}
+Nella realizzazione di tale prova sono stati eseguti due giri del rettangolo.
 \begin{figure} [H]
     \centering
     \includesvg[width=\linewidth]{img/Rectangular}
-    \caption{Traiettorie Rettangolari}
+    \caption{Traiettorie rettangolari}
     \label{fig:rect}
 \end{figure} 
 
 \subsection{Traiettoria Greca}
-
+Nel grafico sono state riportate le tre traiettorie effettuarte dal rover in tre prove differenti. 
 \begin{figure} [H]
     \centering
     \includesvg[width=0.8\linewidth]{img/Greca}
-    \caption{Traiettoria Lawnmower}
+    \caption{Traiettoria Greca}
     \label{fig:greca}
 \end{figure} 
 
 
-\subsection{Traiettoria Rettangolare con APF}
-
+\subsection{Traiettoria rettangolare con APF}
+Nel grafico sono state riportate le due traiettorie effettuarte dal rover in due prove differenti. 
 \begin{figure} [H]
     \centering
     \includesvg[width=0.8\linewidth]{img/ObsAvoidance}
-    \caption{Traiettoria Rettangolare con APF}
+    \caption{Traiettoria rettangolare con APF}
     \label{fig:rectAPF}
 \end{figure} 

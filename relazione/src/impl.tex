@@ -53,8 +53,9 @@ T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ 1 & 0 & 0 & 0.07 \\ 0 & 1 & 0 & 0 \\
 T^C_M = \begin{bmatrix} R & \boldsymbol{t} \\ \begin{matrix} 0 & 0  & 0 \end{matrix} & 1 \end{bmatrix}
 \end{equation}
 L'origine della terna camera è stata traslata per portarla nel centro di massa (CdM) del sistema.
-A partire quindi dalla posa del marker rispetto a camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
+A partire quindi dalla posa del marker rispetto alla camera e dalla posa della camera in terna fissa si può ottenere la posizione in terna fissa del marker $(x_A, y_A)$.\\
 L'id del marker identifica sia i parametri della retta che la direzione desiderata come espresso in 
+\autoref{tab:ArUco}.
   \begin{table} [H]
     \centering
     \begin{tabular}{|ccc|}
@@ -65,7 +66,10 @@ L'id del marker identifica sia i parametri della retta che la direzione desidera
         2 &  $ y = y_A $ & Sinistra\\  \hline
         3 &  $ x = x_A $ & Sinistra\\  \hline
     \end{tabular}
+     \caption{Tabella Marker ArUco}
+    \label{tab:ArUco}    
 \end{table}
+
 
   
 \subsection{Nodo di controllo}
@@ -104,15 +108,15 @@ Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)
         x_2=\frac{-(2mq-2x_r-2my_r)-\sqrt{2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)}}{2(1+m^2)}
         \end{equation}
         Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
-        Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
+        Se invece la distanza risulta minore del raggio si sceglie: 
         \begin{itemize}
-            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati fatti tre casi:
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati implementati tre casi:
             \begin{itemize}
             \item quello in cui i coefficienti angolari sono entambi positivi
             \item quello in cui entrambi i coefficienti angolari sono negativi
-            \item quello in cui il coefficiente angolari di un punto è positivo mentre quello dell'altro è negativo.
+            \item quello in cui il coefficiente angolare di un punto è positivo mentre quello dell'altro è negativo.
             \end{itemize}
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra. Sono stati implementati tre casi come per la svolta a destra.
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
         \end{itemize}
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
@@ -152,16 +156,16 @@ Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
         \begin{equation}
         y_2=\frac{(2y_r)-\sqrt{(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)}}{2}
         \end{equation}
-  Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
-        Nel caso in cui invece la distanza risulti minore del raggio si sceglie 
+ Se la distanza risulta maggiore del raggio $r$, si sceglie la soluzione più lontana rispetto alla posizione dell'ArUco.
+        Se invece la distanza risulta minore del raggio si sceglie: 
         \begin{itemize}
-            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra\\In particolare sono stati fatti tre casi:
+            \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati implementati tre casi:
             \begin{itemize}
             \item quello in cui i coefficienti angolari sono entambi positivi
             \item quello in cui entrambi i coefficienti angolari sono negativi
-            \item quello in cui il coefficiente angolari di un punto è positivo mentre quello dell'altro è negativo.
+            \item quello in cui il coefficiente angolare di un punto è positivo mentre quello dell'altro è negativo.
             \end{itemize}
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra. Sono stati implementati tre casi come per la svolta a destra.
+            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
         \end{itemize}
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
@@ -170,8 +174,7 @@ Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
     \item $\Delta<0$ non si hanno soluzioni, per cui usiamo la proiezione ortogonale tra la retta $x=cost$ e la retta $y=cost$ pasante per $y_r$.
 \end{itemize}
 Il punto così ottenuto è il $\boldsymbol{q_G}$ della \autoref{APF}.
-Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri:
-
+Si applicano quindi le formule viste in tale sottosezione con i seguenti parametri: 
 \begin{table} [H]
     \centering
     \begin{tabular}{|cc|}
@@ -182,6 +185,8 @@ Si applicano quindi le formule viste in tale sottosezione con i seguenti paramet
         $\delta$ & 0.4  m \\  \hline
         $\delta_0$ &  1  m\\  \hline
     \end{tabular}
+    \caption{Tabella parametri APF}
+    \label{tab:APF} 
 \end{table}
 
 \subsection{Nodo convertitore}
@@ -227,3 +232,4 @@ Il filtro è stato implementato con la seguente formula
 \boldsymbol{v_{est}}=\alpha \boldsymbol{v_{pose}}+(1-\alpha) \boldsymbol{v_{acc}}
 \end{equation} 
 in cui il paramemtro $\alpha$ indica la percentuale delle due grandezze di ingresso che concorrono a determinare la stima della velocità.
+Nel nostro caso è stato scelto $\alpha= 0.985$ in modo tale da affidarsi maggiornmente ai valori derivati dalla posizione, che si sono rivelati meno rumorosi rispetto a quelli dell'accelermetro.     
