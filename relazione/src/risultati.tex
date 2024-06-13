@@ -1,36 +1,45 @@
 \label{sec:res}
-Le prove svolte, atte a testare il corretto funzionemaento del rover e delle tecniche di controllo implememntate, sono le seguenti:
+Le prove svolte, atte a testare il corretto funzionamento del rover e delle tecniche di controllo implementate, sono le seguenti:
 \begin{enumerate}
   \item esecuzione di una traiettoria rettangolare 
   \item esecuzione di una greca 
   \item esecuzione di una traiettoria rettangolare con APF 
 \end{enumerate}
- Implementando una funzione in grado di salvare in formato .csv i dati della posizione del rover, durante il suo movimento, è stato possibile realizzare un plot in cui si mostra la traiettoria desiderata (Ground trought) a confronto con quella realizzata dal rover (Robot trajectory).
+ Implementando una funzione in grado di salvare in formato CSV (Comma Separated Value) i dati della posizione del rover, durante il suo movimento, e le coordinate dei marker è stato possibile realizzare un plot in cui si mostra la traiettoria desiderata (Ground truth) a confronto con quella realizzata dal rover (Robot trajectory).
 
-\subsection{Traiettoria rettangolare}
-Nella realizzazione di tale prova sono stati eseguti due giri del rettangolo.
+\subsection{Grafici traiettorie}
+\textbf{Traiettoria rettangolare}
+\\Per la realizzazione della prima prova sono stati eseguti due giri del rettangolo.
 \begin{figure} [H]
     \centering
     \includesvg[width=\linewidth]{img/Rectangular}
     \caption{Traiettorie rettangolari}
     \label{fig:rect}
 \end{figure} 
-
-\subsection{Traiettoria Greca}
-Nel grafico sono state riportate le tre traiettorie effettuarte dal rover in tre prove differenti. 
+\noindent
+Si nota come la figura ottenuta ricalca similmete la traiettoria desiderata e come le due ripetizioni risultano essere molto vicine tra loro nonostante l'accumularsi del drift con il passare del tempo.\\
+\\ \textbf{Traiettoria Greca}
+\\Nel grafico sono state riportate le tre traiettorie effettuate dal rover in tre prove differenti. 
 \begin{figure} [H]
     \centering
     \includesvg[width=0.8\linewidth]{img/Greca}
     \caption{Traiettoria Greca}
     \label{fig:greca}
 \end{figure} 
-
-
-\subsection{Traiettoria rettangolare con APF}
-Nel grafico sono state riportate le due traiettorie effettuarte dal rover in due prove differenti. 
+\noindent
+ Anche in questo caso si nota come le traiettorie del rover ricalcano la traiettoria desiderata in maniera anche più fedele del caso precedente.
+Quindi nonostante le tre prove differenti i risultati ottenuti sono molto simili tra loro.\\
+\\ \textbf{Traiettoria rettangolare con APF}
+\\Nel grafico sono state riportate le due traiettorie effettuarte dal rover in due prove differenti. 
 \begin{figure} [H]
     \centering
     \includesvg[width=0.8\linewidth]{img/ObsAvoidance}
     \caption{Traiettoria rettangolare con APF}
     \label{fig:rectAPF}
 \end{figure} 
+\noindent
+ Si nota come il rover evita gli ostacoli, cercando comunque, subito dopo, di convergere alla reta desiderata.
+Si noti anche come in base a come l'ostacolo viene approcciato dal rover, quest ultimo lo aggira sia da destra che da sinistra. 
+
+\subsection{Discussione dei risultati}
+Dalla traiettoria Greca e dall'esempio di obstacle avoidance, si nota come nei segmenti più lunghi il rover riesca a mantere un errore tra la traiettoria desiderata e quella eseguita basso. Mentre nel caso di segmenti di minore lunghezza l'errore ottenuto risulta essere maggiore. Questo dipende, sia dal raggio della circonferenza con cui si calcola il goal che dalla distanza massima da cui si rileva il marker ArUco: diminuire la distanza a cui l'ArUco viene rilevato potrebbe permettere una convergenza migliore (rilevare l'aruco più tardi vuol dire approcciarsi alla retta più tardi e quindi avere più tempo per convergere alla retta), e diminuire il raggio (raggio minore porta sterzate più decise, che permettono di raggiungere prima la retta, ma anche ad un comportamento più nervoso).  

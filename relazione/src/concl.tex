@@ -1,7 +1,7 @@
 \label{sec:concl}
 
 \subsection{Sviluppi Futuri}
-  Possibili sviluppi futuri: 
+  Possibili sviluppi futuri possono essere i seguenti: 
   \begin{itemize}
     \item Implementazione filtro di Kalman (Correzione - Predizione) per una migliore stima della velocità lineare
     \item Implementazione Firmware per poter utilizzare gli encoder presenti nei motori di sterzo e trazione
@@ -11,4 +11,4 @@
   
 \subsection{Conclusioni}
   Gli obiettivi fissati sono stati raggiunti come dimostrato dai grafici, nonostante gli errori sulla posa introdotti dalla ZED. Il nodo di visione riesce correttamente ad individuare i marker e gli id ad essi associati, il nodo di controllo sceglie correttamente il punto a cui convergere tra i due proposti  e riesce a svoltare in modo smooth.
-  Per quanto riguarda l'obstacle avoidance il sistema evita gli ostacoli la cui posizione è conosciuta a priori dimostrando la bontà dell'implementazione di APF, mentre non è stato possibile testare APF nel caso di ostacoli dinamici a causa della mancata comprensione del funzionamento del LiDAR. Il nodo convertitore, tramite l'utilizzo di due PID correttamente regolati, traduce con successo le grandezze solitamente utilizzate nel controllo dei veicoli ($v$ e $\omega$) nelle grandezze impiegate nel dart\_wrapper. 
+  Per quanto riguarda l'obstacle avoidance il sistema evita gli ostacoli la cui posizione è conosciuta a priori dimostrando la bontà dell'implementazione di APF, mentre non è stato possibile testare APF nel caso di ostacoli dinamici a causa della mancata comprensione del funzionamento del LiDAR. Il nodo convertitore, tramite l'utilizzo di due PID correttamente regolati, traduce con successo le grandezze solitamente utilizzate nel controllo dei veicoli ($v$ e $\omega$) nelle grandezze impiegate nel \texttt{dart\_wrapper}. 

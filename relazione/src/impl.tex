@@ -45,7 +45,7 @@ Gli obiettivi del nodo visione sono:
   posa del target in terna camera. Per risolvere questo problema sono stati realizzati vari algoritmi \cite{marchand2015pose}, i quali possono essere richiamati dalla 
   funzione \texttt{solve\_PnP()} della libreria. Nello specifico in \cite{infinitesimal} è proposto un metodo per risolvere il problema nel caso il target siano dei
   marker. \\
-  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{In realtà la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ -1 & 0 & 0 & 0.07 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $. Ma, dato che la camera è ruotata di $180^{\circ}$ si ottiene la matrice sopra riportata. }   
+  La matrice di trasformazione dalla terna Robot alla terna camera è data da \footnote{In realtà la matrice di trasformazione dovrebbe essere $T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ -1 & 0 & 0 & 0.07 \\ 0 & -1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} $. \\ Ma, dato che la camera è ruotata di $180^{\circ}$ si ottiene la matrice sopra riportata. }   
 \begin{equation}
 T^R_C = \begin{bmatrix} 0 & 0 & 1 & -0.2 \\ 1 & 0 & 0 & 0.07 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} 
 \end{equation}\\ mentre la matrice di trasformazione dalla terna camera alla terna marker da 
@@ -197,7 +197,7 @@ Lo yaw desiderato è viene calcolato tramite
 \omega_{des}(t+1)=\frac{\theta_{des}(t+1)-\theta(t)}{\Delta{T}} \ \ \
 \Rightarrow \ \ \ \theta_{des}(t+1)=\theta(t)+\omega_{des}(t)\Delta{T}.
 \end{equation} 
-Una volta ottenuto tale valore, si calcola $ \theta_e = \theta(t) - \theta_{des} $ e tale errore viene dato in pasto ad un controllore P la cui uscita è l'angolo di sterzo del rover.
+Una volta ottenuto tale valore, si calcola $ \theta_e = \theta(t) - \theta_{des} $ e tale errore risulta essere l'ingresso di un controllore P la cui uscita è l'angolo di sterzo del rover.
 I guadagni dei due controllori sono riportati in \autoref{tab:guadPID}.
 \begin{table} [H]
     \centering
@@ -231,5 +231,5 @@ Il filtro è stato implementato con la seguente formula
 \begin{equation}
 \boldsymbol{v_{est}}=\alpha \boldsymbol{v_{pose}}+(1-\alpha) \boldsymbol{v_{acc}}
 \end{equation} 
-in cui il paramemtro $\alpha$ indica la percentuale delle due grandezze di ingresso che concorrono a determinare la stima della velocità.
-Nel nostro caso è stato scelto $\alpha= 0.985$ in modo tale da affidarsi maggiornmente ai valori derivati dalla posizione, che si sono rivelati meno rumorosi rispetto a quelli dell'accelermetro.     
+in cui il parametro $\alpha$ indica la percentuale delle due grandezze di ingresso che concorrono a determinare la stima della velocità.
+Nel nostro caso è stato scelto $\alpha= 0.985$ in modo tale da affidarsi maggiormente ai valori derivati dalla posizione, che si sono rivelati meno rumorosi rispetto a quelli dell'accelermetro.     
