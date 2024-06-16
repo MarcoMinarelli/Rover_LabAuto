@@ -96,6 +96,19 @@
 \section{Conclusioni e sviluppi futuri}
 \input{src/concl}
 
+\section*{Problematiche}
+Durante lo svolgimento dell'elaborato abbiamo riscontrato le seguenti problematiche:
+\begin{enumerate} 
+  \item Ogni versione dello \texttt{ZED\_wrapper} compila solo verso una determinata versione dello \texttt{ZED\_SDK}. Verificare quindi che le versioni siano compatibili. La versione attualmente installata dell'SDK è la \texttt{4.0.8} .
+  \item La frequenza della pubblicazione della posa dipende dalla risoluzione a cui è impostata la ZED (https://www.stereolabs.com/docs/video/camera-controls). Questa frequenza è legata anche al parametro \texttt{grab\_frame\_rate} presente nel file \texttt{zed2i.yaml}. Una volta modificato tale file si può modificare il parametro \texttt{pub\_frame\_rate} dentro \texttt{common.yaml}.  
+  \item  OpenCV fornisce dei moduli extra che implementano funzionalità non supportate dalla versione standard (i.e. ArUco) che attualmente non sono installate. Per poterle installare si deve conoscere la cartella in cui è stata installata la libreria. \'E stato risolto copiando i file di interesse da Github e incollandoli nella cartella del nostro progetto.
+  \item Per far sì che le callback relative al LiDAR vengano eseguite è necessario settare il subscriber con QoS \texttt{rclcpp::SensorDataQoS()}. 
+   \item Può capitare che la Orin si accenda ma non carichi l'interfaccia grafica (quando si sfrutta il collegamento tramite DisplayPort). Questo può voler dire che la memoria è piena. Si può risolvere entrando tramite ssh ed andando a cancellare file di grosse dimensioni (i.e \texttt{rosbag}). 
+   \item Può capitare che all'avvio del suo wrapper il LiDAR restituisca health code \texttt{\#ffffffff} e quindi interrompa il suo funzionamento. Per risolvere è sufficiente scollegare l'USB relativa e riattaccarla. 
+   \item La terna LiDAR e la terna rover sono ruotate di 180°.
+\end{enumerate}
+
+\newpage
 \addcontentsline{toc}{section}{Bibliografia}
 \nocite{*}
 \bibliographystyle{ieeetr}
