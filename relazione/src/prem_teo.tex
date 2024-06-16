@@ -131,7 +131,7 @@ Si consideri un generico sistema $P(s)$ da controllare attraverso un controllore
 \subsubsection{Schemi anti wind-up}
 Il fenomeno del wind-up è dovuto all’azione integrale. Questo fenomeno si innesca quando i sistemi di attuazione che trasformano il segnale di comando nell’azione di controllo vanno in saturazione. Questo accade quando $e(t)$, che a causa della saturazione  rimane costante in segno, viene integrato.\\
 Quando poi cambia il segnale di riferimento, $e(t)$ cambia segno ma prima di osservare una variazione del segnale di comando le componenti integrali del PID si devono scaricare così da uscire dalla saturazione. Questo può richiedere tempi lunghi con una conseguente perdita di reattività. \\
-Si usano degli schemi anti wind- up per prevenire questo fenomeno. Una delle tecniche anti wind-up più nota in letteratura  è il  "Clamping". \\
+Si usano degli schemi anti wind-up per prevenire questo fenomeno. Una delle tecniche anti wind-up più nota in letteratura  è il  "Clamping". \\
  \begin{figure} [H]
     \centering
     \fontsize{8}{10}\selectfont
