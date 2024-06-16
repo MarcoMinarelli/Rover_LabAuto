@@ -190,7 +190,7 @@ Si applicano quindi le formule viste in tale sottosezione con i seguenti paramet
 \end{table}
 
 \subsection{Nodo convertitore}
-Tale nodo è stato implementetato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
+Tale nodo è stato implementato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
 Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i gudagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\
 Lo yaw desiderato è viene calcolato tramite
 \begin{equation}
