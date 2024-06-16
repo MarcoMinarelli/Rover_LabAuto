@@ -65,6 +65,7 @@ L'id del marker identifica sia i parametri della retta che la direzione desidera
         1 &  $ x= x_A $  & Destra\\  \hline
         2 &  $ y = y_A $ & Sinistra\\  \hline
         3 &  $ x = x_A $ & Sinistra\\  \hline
+        4 &   Stop  & \\ \hline
     \end{tabular}
      \caption{Tabella Marker ArUco}
     \label{tab:ArUco}    
@@ -112,11 +113,11 @@ Definiamo $\Delta=b^2-4ac=(2mq-2x_r-2my_r)^2-4(1+m^2)(x_r^2+q^2+y_r^2-2qy_r-r^2)
         \begin{itemize}
             \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati implementati tre casi:
             \begin{itemize}
-            \item quello in cui i coefficienti angolari sono entambi positivi
+            \item quello in cui i coefficienti angolari sono entrambi positivi
             \item quello in cui entrambi i coefficienti angolari sono negativi
             \item quello in cui il coefficiente angolare di un punto è positivo mentre quello dell'altro è negativo.
             \end{itemize}
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
+            \item quella con il coefficiente angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
         \end{itemize}
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
@@ -161,11 +162,11 @@ Definiamo $\Delta=b^2-4ac=(-2y_r)^2-4(x_r^2+x_a^2-2x_ax_r+y_r^2-r^2)$. \\Se:
         \begin{itemize}
             \item quella con il coefficiente angolare $m$ minore nel caso in cui il rover giri a destra. \\In particolare sono stati implementati tre casi:
             \begin{itemize}
-            \item quello in cui i coefficienti angolari sono entambi positivi
+            \item quello in cui i coefficienti angolari sono entrambi positivi
             \item quello in cui entrambi i coefficienti angolari sono negativi
             \item quello in cui il coefficiente angolare di un punto è positivo mentre quello dell'altro è negativo.
             \end{itemize}
-            \item quella con il coefficicnte angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
+            \item quella con il coefficiente angolare maggiore nel caso in cui il rover giri a sinistra (anche in tale scenario sono stati implementati tre casi).
         \end{itemize}
     \item $\Delta=0$ si ha una sola soluzione
     \begin{equation}
@@ -189,9 +190,29 @@ Si applicano quindi le formule viste in tale sottosezione con i seguenti paramet
     \label{tab:APF} 
 \end{table}
 
+\subsubsection{Calcolo garandezze di controllo}
+A partire dalla forza totale agente sul rover $f_t=(f_{t,x}, f_{t,y}, f_{t,\theta})$ si calcolano le grandezze $v$ e $\omega$ come segue:
+\begin{equation}
+    v=f_{t,x} cos(\theta) + f_{t,y} sin (\theta)
+\end{equation}
+\begin{equation}
+    \omega= k_{\theta}(atan2(f_{t,y}, f_{t,x})-\theta)
+\end{equation}
+Nella legge di controllo di $\omega$ la funzione $atan2$ introduce una discontinuità, per la quale una piccola variazione di $f_{t,y}$ può portare una grande variazione di $\omega$. Per risolvere tale problema è stata apportata una modifica
+\begin{equation*} 
+|(atan2(f_{t,y}, f_{t,x})-\theta|>\pi \ \ \ \ e \ \ 
+\begin{cases}
+
+    atan2(f_{t,y}, f_{t,x})-\theta<0  \Rightarrow{\omega= k_{\theta}(atan2(f_{t,y}, f_{t,x})-\theta)+2\pi} 
+   \\
+    atan2(f_{t,y}, f_{t,x})-\theta>0  \Rightarrow{\omega= k_{\theta}(atan2(f_{t,y}, f_{t,x})-\theta)-2\pi} 
+  \end{cases} 
+\end{equation*}
+ 
+
 \subsection{Nodo convertitore}
 Tale nodo è stato implementato con lo scopo di ottenere la velocità angolare e lineare a partire dall'accelerazione e dallo sterzo. Dopo aver ricavato tali parametri questi vengono inviati al rover.\\
-Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i gudagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\
+Tramite l'utilizzo di un PID è possibile passare dall'errore di velocità ad un valore di uscita in percentuale (\%), che ci permette di controllare la velocità del rover. Per settare i guadagni del PID è stato usata l'applicazione PID Tuner disponibile su MATLAB. Infatti, tramite l'Identification Toolbox di MATLAB è stato possibile definire, dati dei campioni ottenuti sperimentalmente dal rover, la risposta del sistema ad un gradino.\\
 Lo yaw desiderato è viene calcolato tramite
 \begin{equation}
 \omega_{des}(t+1)=\frac{\theta_{des}(t+1)-\theta(t)}{\Delta{T}} \ \ \
@@ -214,10 +235,8 @@ I guadagni dei due controllori sono riportati in \autoref{tab:guadPID}.
 
 
 
-
-
 \subsubsection{Filtro complementare}
-Per ottenere un segnale di velocità longitudinale del rover è stato implementato un filtro complementare \cite{Filtrocompelmentare}. Questo sfrutta i dati della posizione stimata del rover e dal'accellerometro della ZED filtrandoli tramite l'utilizzo di un filtro passa basso e di un filtro passa alto. Più precisamente l'idea è quella di derivare i dati della posizione del rover per ottenere una stima della velocità che viene poi mandata al filtro passa basso, mentre per quanto riguarda i dati dell'accelerometro questi vengono integrati per ottenere sempre una stima della velocità che viene poi filtrata tramite filtro passa alto.
+Per ottenere un segnale di velocità longitudinale del rover è stato implementato un filtro complementare \cite{Filtrocompelmentare}. Questo sfrutta i dati della posizione stimata del rover e dall'accelerometro della ZED filtrandoli tramite l'utilizzo di un filtro passa basso e di un filtro passa alto. Più precisamente l'idea è quella di derivare i dati della posizione del rover per ottenere una stima della velocità che viene poi mandata al filtro passa basso, mentre per quanto riguarda i dati dell'accelerometro questi vengono integrati per ottenere sempre una stima della velocità che viene poi filtrata tramite filtro passa alto.
 L'uscita è data dalla somma dei due segnali ottenuti dai filtri.
 Provenendo da sensori diversi, le misurazioni della velocità di entrambi i rami presentano diverse perturbazioni del rumore.
 \begin{figure} [H]
@@ -232,4 +251,4 @@ Il filtro è stato implementato con la seguente formula
 \boldsymbol{v_{est}}=\alpha \boldsymbol{v_{pose}}+(1-\alpha) \boldsymbol{v_{acc}}
 \end{equation} 
 in cui il parametro $\alpha$ indica la percentuale delle due grandezze di ingresso che concorrono a determinare la stima della velocità.
-Nel nostro caso è stato scelto $\alpha= 0.985$ in modo tale da affidarsi maggiormente ai valori derivati dalla posizione, che si sono rivelati meno rumorosi rispetto a quelli dell'accelermetro.     
+Nel nostro caso è stato scelto $\alpha= 0.985$ in modo tale da affidarsi maggiormente ai valori derivati dalla posizione, che si sono rivelati meno rumorosi rispetto a quelli dell'accelerometro.     
